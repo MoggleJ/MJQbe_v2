@@ -1,0 +1,83 @@
+name: Native Build
+
+on:
+  push:
+    branches: [dev, main, "sprint-*"]
+    paths:
+      - "native/**"
+      - ".github/workflows/native-build.yml"
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "native/**"
+
+jobs:
+  rust-check:
+    name: Rust — cargo check + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check native/core exists
+        id: check
+        run: |
+          if [ -f native/core/Cargo.toml ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.check.outputs.exists == 'true'
+
+      - uses: Swatinem/rust-cache@v2
+        if: steps.check.outputs.exists == 'true'
+        with:
+          workspaces: native/core
+
+      - name: Cargo check
+        if: steps.check.outputs.exists == 'true'
+        run: cargo check --manifest-path native/core/Cargo.toml
+
+      - name: Cargo test
+        if: steps.check.outputs.exists == 'true'
+        run: cargo test --manifest-path native/core/Cargo.toml
+
+      - name: Not yet implemented
+        if: steps.check.outputs.exists == 'false'
+        run: echo "native/core not yet scaffolded — skipping (Sprint 03)"
+
+  cpp-check:
+    name: C++ Qt6 — cmake check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check native/ui exists
+        id: check
+        run: |
+          if [ -f native/ui/CMakeLists.txt ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install Qt6 + CMake
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake qt6-base-dev qt6-declarative-dev
+
+      - name: CMake configure
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          mkdir -p native/ui/build
+          cmake -S native/ui -B native/ui/build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: CMake build
+        if: steps.check.outputs.exists == 'true'
+        run: cmake --build native/ui/build --parallel
+
+      - name: Not yet implemented
+        if: steps.check.outputs.exists == 'false'
+        run: echo "native/ui not yet scaffolded — skipping (Sprint 03)"

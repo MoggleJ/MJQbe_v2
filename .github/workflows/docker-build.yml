@@ -1,0 +1,29 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [dev, main, "sprint-*"]
+    paths:
+      - "daemon/**"
+      - "frontend/**"
+      - "docker-compose*.yml"
+      - ".github/workflows/docker-build.yml"
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  build-daemon:
+    name: Daemon C — build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build daemon image
+        run: docker build ./daemon -t mjqbe-daemon:ci
+
+  build-frontend:
+    name: Frontend — build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build frontend image
+        run: docker build ./frontend -t mjqbe-frontend:ci
