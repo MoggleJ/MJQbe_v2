@@ -1,0 +1,6 @@
+version: 2
+ignore-paths:
+  - .env.example
+  - "**/*.example"
+  - "docs/**"
+  - "agents/**"
