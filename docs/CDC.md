@@ -138,10 +138,10 @@ L'interface native cible : TV (1920×1080) et desktop (1280×800).
 ### 6.1 Stack
 | Couche | Tech |
 |---|---|
-| Interface | PySide6 + QML (Qt 6.x) |
-| Logique métier | Python 3.11 |
-| Accès données | SQLAlchemy (direct PostgreSQL) |
-| Accès daemon | Socket Unix (même daemon C que le web) |
+| Interface | C++ + Qt6 / QML (GPU OpenGL ES) |
+| Logique système | Rust (monitoring, process, daemon client) |
+| Accès données | Rust + `sqlx` (direct PostgreSQL, async) |
+| Accès daemon | Socket Unix C++ → même daemon C que le web |
 | Démarrage | systemd service |
 
 ### 6.2 Authentification
@@ -152,18 +152,24 @@ L'interface native cible : TV (1920×1080) et desktop (1280×800).
 ### 6.3 Structure des dossiers
 ```
 native/
-  app/
-    domain/       # Entités, interfaces
-    application/  # Use cases
-    infrastructure/  # DB, socket daemon
-    ui/           # Fichiers QML
-      components/
+  ui/                  # C++ + Qt6/QML
+    CMakeLists.txt
+    main.cpp           # QApplication, charge le QML root
+    qml/
+      Main.qml
+      components/      # Sidebar, AppCard, ThemeManager
       modes/
         tv/
         desktop/
         dev/
-  main.py
-  requirements.txt
+  core/                # Rust — logique métier et données
+    Cargo.toml
+    src/
+      main.rs          # Serveur IPC (Unix socket vers C++)
+      db/              # sqlx, requêtes PostgreSQL
+      system/          # CPU, RAM, /proc, Docker
+      daemon_client/   # Client socket Unix → daemon C
+  mjqbe-native.service # systemd unit
 ```
 
 ---
@@ -227,8 +233,19 @@ native/
 - **Dockerisation** pour la partie web uniquement
 - App native comme processus systemd (accès direct hardware + display)
 - IHM totalement séparée de la gestion système
-- Point d'entrée unique par couche (API REST pour le web, Python direct pour le natif)
+- Point d'entrée unique par couche (API REST pour le web, IPC Rust↔C++ pour le natif)
 - Dossier `agents/` : fichiers de spécifications pour les agents IA
+
+### 10.3 Stack complète
+
+| Composant | Langage principal | Notes |
+|---|---|---|
+| App native — UI | C++ + Qt6/QML | GPU OpenGL ES, animations fluides |
+| App native — logique | Rust | `sqlx`, `tokio`, monitoring système |
+| Daemon matériel | C | GPIO, IR, CEC, Bluetooth, sockets Unix |
+| Web backend | Python 3.11 + FastAPI | OAuth, JWT, ORM |
+| Web frontend | TypeScript + React 18 | Vite, CSS variables thèmes |
+| CLI | Bash | Orchestration Docker + commandes système |
 
 ### 10.3 CLI
 - Une CLI nommée `dev` écrite en Bash

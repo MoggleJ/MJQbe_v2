@@ -167,24 +167,25 @@ Naviguer entre pages → animation cube visible. Changer le thème → appliqué
 
 ---
 
-## Sprint 9 — App Native — Scaffolding PySide6/QML [NATIVE]
+## Sprint 9 — App Native — Scaffolding C++/Qt6 + Rust [NATIVE]
 
 **Objectif :** Poser la structure de l'application native. Après ce sprint, la fenêtre s'ouvre sur le Pi.
 
 ### Tâches
-- [ ] Créer le dossier `native/` avec structure Clean Architecture
-- [ ] Installer PySide6 et configurer `requirements.txt` natif
-- [ ] Créer le service systemd `mjqbe-native.service`
-- [ ] Initialiser la fenêtre principale QML (plein écran, sidebar + zone contenu)
-- [ ] Implémenter le système de thèmes QML (10 thèmes via variables Qt)
-- [ ] Implémenter le composant `Sidebar` QML (titre dynamique, menu, heure)
-- [ ] Implémenter la navigation entre pages (avec animation cube QML)
-- [ ] Connecter la couche infrastructure : SQLAlchemy direct sur PostgreSQL
-- [ ] Authentification locale admin (PIN ou mot de passe hashé, stocké en base)
-- [ ] Stub pour développement hors Pi (désactive GPIO, utilise DB locale)
+- [ ] Créer `native/ui/` : projet Qt6/QML avec `CMakeLists.txt`
+- [ ] Créer `native/core/` : crate Rust avec `Cargo.toml` (`sqlx`, `tokio`, `serde`)
+- [ ] Définir le protocole IPC : C++ ↔ Rust via socket Unix JSON (C++ client, Rust serveur)
+- [ ] Fenêtre principale QML : plein écran, sidebar 250px + zone contenu
+- [ ] Implémenter `ThemeManager.qml` (10 thèmes via propriétés Qt)
+- [ ] Implémenter `Sidebar.qml` : titre dynamique, menu, heure (`Timer` QML)
+- [ ] Navigation entre pages QML (`StackView` ou `Loader`)
+- [ ] Couche Rust `db/` : connexion PostgreSQL via `sqlx`, requêtes apps/catégories
+- [ ] Authentification locale admin (bcrypt Rust, hash stocké en base)
+- [ ] Stub mode hors Pi : désactive GPIO, utilise DB locale
+- [ ] Créer `mjqbe-native.service` (systemd unit)
 
 ### Livrable de vérification
-`python native/main.py` → fenêtre s'ouvre, sidebar visible, navigation fonctionne.
+`cmake --build && ./mjqbe-native` → fenêtre s'ouvre, sidebar visible, navigation fonctionne.
 
 ---
 
@@ -193,15 +194,16 @@ Naviguer entre pages → animation cube visible. Changer le thème → appliqué
 **Objectif :** Les deux modes de consommation fonctionnels dans l'app native.
 
 ### Tâches
-- [ ] Implémenter la page `Home` QML (apps récentes / favorites)
-- [ ] Implémenter `AllApps` QML avec grille
-- [ ] Implémenter le mode TV : icônes larges, catégories visibles, navigation télécommande
-- [ ] Implémenter le mode Desktop : layout dense, catégories groupées
-- [ ] Créer le composant `AppCard` QML (icône + nom)
-- [ ] Implémenter la recherche temps réel
-- [ ] Implémenter les favoris (toggle, section dédiée)
-- [ ] Implémenter la page `Settings` QML (thème, layout, icon_size)
-- [ ] Ouvrir les apps : WebView embarquée ou `subprocess` navigateur
+- [ ] Implémenter `AppCard.qml` (icône arrondie 80px + nom tronqué)
+- [ ] Implémenter `Home.qml` (apps récentes / favorites via Rust IPC)
+- [ ] Implémenter `AllApps.qml` : `GridView` QML, chips catégories, filtre temps réel
+- [ ] Mode TV : colonnes larges, navigation `KeyNavigation` QML (télécommande)
+- [ ] Mode Desktop : layout dense, catégories groupées
+- [ ] Implémenter `Search.qml` : filtre live via Rust IPC
+- [ ] Favoris : toggle côté Rust, persisté PostgreSQL
+- [ ] `Settings.qml` : sélecteur thème (10 options), layout, icon_size
+- [ ] Ouvrir les apps : `Qt.openUrlExternally()` ou `QWebEngineView`
+- [ ] Couche Rust : use cases favorites, settings, search
 
 ### Livrable de vérification
 Mode TV : grille apps visible, navigation clavier/télécommande. Mode Desktop : layout dense. Favoris persistés.
@@ -213,14 +215,15 @@ Mode TV : grille apps visible, navigation clavier/télécommande. Mode Desktop :
 **Objectif :** Dashboard de monitoring et contrôle système dans l'app native.
 
 ### Tâches
-- [ ] Implémenter la page Dev mode QML (accessible après re-auth admin)
-- [ ] Widgets monitoring : CPU, RAM, disque, réseau, température (polling `/proc`)
-- [ ] Liste des processus (lecture `/proc`, kill/nice)
-- [ ] Liste des conteneurs Docker (appels `docker` subprocess)
-- [ ] Terminal intégré (QML + `QProcess` vers bash)
-- [ ] Gestion des serveurs hébergés (démarrer/arrêter conteneurs)
-- [ ] Lien vers interface graphique légère du Pi (lancer session X/Wayland)
-- [ ] Re-authentification obligatoire avant actions destructives
+- [ ] `Dev.qml` : gate re-auth admin avant affichage
+- [ ] Widgets monitoring QML : CPU, RAM, disque, réseau, température
+- [ ] Couche Rust `system/` : lecture `/proc/stat`, `/proc/meminfo`, `sysfs` temp
+- [ ] Rust : liste des processus (`/proc/<pid>/status`), kill/nice via `libc`
+- [ ] Rust : liste des conteneurs Docker (appel CLI `docker ps` ou API Unix socket)
+- [ ] Terminal QML : `QProcess` → bash, texte dans `TextArea` scrollable
+- [ ] Gestion serveurs : démarrer/arrêter conteneurs (Rust → `docker start/stop`)
+- [ ] Lien interface graphique Pi : `Qt.openUrlExternally` vers VNC ou `startx`
+- [ ] Re-auth via dialog QML avant toute action destructive
 
 ### Livrable de vérification
 Sur Pi : mode Dev accessible après auth admin → stats CPU/RAM en temps réel → terminal fonctionnel.
@@ -232,11 +235,12 @@ Sur Pi : mode Dev accessible après auth admin → stats CPU/RAM en temps réel 
 **Objectif :** Animations GPU et polish de l'interface native.
 
 ### Tâches
-- [ ] Animation de chargement : cube MJQbe 3D en rotation (QML + OpenGL ES)
-- [ ] Transition de page : rotation cube vers le haut (QML `SequentialAnimation`)
-- [ ] Optimiser le rendu QML (layers, `smooth`, `antialiasing` ciblés)
-- [ ] Profiler la mémoire native (cible < 150 Mo RAM)
-- [ ] Navigation télécommande complète (KeyNavigation QML sur toutes les pages)
+- [ ] Animation chargement : cube MJQbe 3D (`Qt3D` ou `ShaderEffect` QML + OpenGL ES)
+- [ ] Transition de page : rotation cube vers le haut (`SequentialAnimation` QML)
+- [ ] Optimiser rendu QML : `layer.enabled`, éviter bindings inutiles, `clip: false` là où possible
+- [ ] Profiler mémoire native : `valgrind` / `heaptrack` → cible < 150 Mo RAM
+- [ ] Navigation télécommande complète (`KeyNavigation` QML sur toutes les pages)
+- [ ] Compiler en release (`cmake -DCMAKE_BUILD_TYPE=Release`) et mesurer perf sur Pi
 
 ### Livrable de vérification
 Transitions fluides sur Pi. `htop` montre < 150 Mo RAM pour le process natif.

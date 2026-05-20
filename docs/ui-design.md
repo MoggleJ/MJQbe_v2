@@ -147,10 +147,14 @@ Les autres thèmes suivent le même schéma de variables.
 
 ---
 
-## Notes pour l'implémentation native (QML)
+## Notes pour l'implémentation native (C++ / Qt6 / QML)
 
-- Les mêmes variables de thème sont définies dans un objet QML `Theme {}`
-- `AppCard` utilise `Image` + `Text` (pas de fond de card visible)
-- `GridView` QML avec `cellWidth: 106`, `cellHeight: 120`
-- La sidebar est un `Column` dans un `Rectangle` avec `width: 250`
-- L'heure est un `Timer { interval: 1000 }` → `Qt.formatTime(new Date(), "hh:mm:ss")`
+- **Build** : CMake + Qt6, compilé en C++ Release pour le Pi
+- **IPC** : C++ (Qt) ↔ Rust via socket Unix JSON — Qt envoie requêtes, Rust répond
+- **Thèmes** : objet QML singleton `Theme {}` avec propriétés color bindées aux variables
+- **AppCard** : `Image` + `Text` (pas de fond de card visible), `layer.enabled: true` pour GPU
+- **GridView** : `cellWidth: 106`, `cellHeight: 120`, modèle fourni par Rust via IPC
+- **Sidebar** : `Column` dans `Rectangle { width: 250 }`, fond `Theme.bgSidebar`
+- **Heure** : `Timer { interval: 1000; onTriggered: timeLabel.text = Qt.formatTime(new Date(), "hh:mm:ss") }`
+- **Animations** : `SequentialAnimation` + `RotationAnimation` pour la transition cube
+- **Terminal Dev** : `QProcess` côté C++, exposé à QML via `Q_PROPERTY`
