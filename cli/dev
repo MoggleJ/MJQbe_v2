@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+COMPOSE_PROD_FILE="$PROJECT_ROOT/docker-compose.prod.yml"
 COMPOSE_DEV_FILE="$PROJECT_ROOT/docker-compose.dev.yml"
 ENV_FILE="$PROJECT_ROOT/.env"
 CONFIG_FILE="$PROJECT_ROOT/config/config.yml"
@@ -41,28 +42,32 @@ require_env() {
     fi
 }
 
-_compose()     { docker compose -f "$COMPOSE_FILE" "$@"; }
-_compose_dev() { docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_DEV_FILE" "$@"; }
+_compose()      { docker compose -f "$COMPOSE_FILE" "$@"; }
+_compose_prod() { docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" "$@"; }
+_compose_dev()  { docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_DEV_FILE" "$@"; }
 
 cmd_up() {
     require_env
     info "Nettoyage des conteneurs résiduels..."
-    _compose down --remove-orphans 2>/dev/null || true
-    info "Démarrage des services..."
-    _compose --env-file "$ENV_FILE" up -d --build --force-recreate
-    success "Services démarrés. Lance 'dev status' pour vérifier."
+    _compose_prod down --remove-orphans 2>/dev/null || true
+    _compose_dev  down --remove-orphans 2>/dev/null || true
+    info "Démarrage des services (prod)..."
+    _compose_prod --env-file "$ENV_FILE" up -d --build --force-recreate
+    success "Services démarrés → http://localhost:4443"
 }
 
 cmd_down() {
     info "Arrêt des services..."
-    _compose down --remove-orphans
+    _compose_prod down --remove-orphans 2>/dev/null || true
+    _compose_dev  down --remove-orphans 2>/dev/null || true
     success "Services arrêtés."
 }
 
 cmd_watch() {
     require_env
     info "Nettoyage des conteneurs résiduels..."
-    _compose_dev down --remove-orphans 2>/dev/null || true
+    _compose_prod down --remove-orphans 2>/dev/null || true
+    _compose_dev  down --remove-orphans 2>/dev/null || true
     info "Démarrage en mode WATCH (hot-reload)..."
     info "  Frontend : Vite HMR  → http://localhost:4443"
     info "  API      : uvicorn --reload"

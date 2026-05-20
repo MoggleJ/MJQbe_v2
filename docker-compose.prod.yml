@@ -1,0 +1,7 @@
+# Override production — ports exposés
+# Usage : dev up   (géré automatiquement par le CLI)
+
+services:
+  frontend:
+    ports:
+      - "0.0.0.0:4443:80"
