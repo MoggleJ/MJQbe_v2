@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+ENV_FILE="$PROJECT_ROOT/.env"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+info()    { echo -e "${BLUE}[dev]${NC} $*"; }
+success() { echo -e "${GREEN}[dev]${NC} $*"; }
+warn()    { echo -e "${YELLOW}[dev]${NC} $*"; }
+error()   { echo -e "${RED}[dev]${NC} $*" >&2; }
+
+require_env() {
+    if [[ ! -f "$ENV_FILE" ]]; then
+        warn ".env not found — copying from .env.example"
+        cp "$PROJECT_ROOT/.env.example" "$ENV_FILE"
+        warn "Edit $ENV_FILE before running services."
+    fi
+}
+
+cmd_up() {
+    require_env
+    info "Starting all services..."
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
+    success "Services started. Run 'dev status' to check health."
+}
+
+cmd_down() {
+    info "Stopping all services..."
+    docker compose -f "$COMPOSE_FILE" down
+    success "Services stopped."
+}
+
+cmd_restart() {
+    local service="${1:-}"
+    if [[ -n "$service" ]]; then
+        info "Restarting service: $service"
+        docker compose -f "$COMPOSE_FILE" restart "$service"
+    else
+        info "Restarting all services..."
+        docker compose -f "$COMPOSE_FILE" restart
+    fi
+    success "Done."
+}
+
+cmd_logs() {
+    local service="${1:-}"
+    if [[ -n "$service" ]]; then
+        docker compose -f "$COMPOSE_FILE" logs -f "$service"
+    else
+        docker compose -f "$COMPOSE_FILE" logs -f
+    fi
+}
+
+cmd_status() {
+    info "Service status:"
+    docker compose -f "$COMPOSE_FILE" ps
+}
+
+cmd_db() {
+    require_env
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    info "Connecting to PostgreSQL..."
+    docker compose -f "$COMPOSE_FILE" exec db psql -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}"
+}
+
+cmd_shell() {
+    local service="${1:-api}"
+    info "Opening shell in service: $service"
+    docker compose -f "$COMPOSE_FILE" exec "$service" /bin/sh
+}
+
+cmd_update() {
+    info "Pulling latest images and rebuilding..."
+    docker compose -f "$COMPOSE_FILE" pull
+    docker compose -f "$COMPOSE_FILE" up -d --build
+    success "Update complete."
+}
+
+cmd_health() {
+    info "Checking service health..."
+    local all_ok=true
+    while IFS= read -r line; do
+        if echo "$line" | grep -q "healthy\|running"; then
+            echo -e "  ${GREEN}✓${NC} $line"
+        elif echo "$line" | grep -q "unhealthy\|exited\|dead"; then
+            echo -e "  ${RED}✗${NC} $line"
+            all_ok=false
+        else
+            echo -e "  ${YELLOW}?${NC} $line"
+        fi
+    done < <(docker compose -f "$COMPOSE_FILE" ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null | tail -n +2)
+
+    if $all_ok; then
+        success "All services healthy."
+    else
+        error "Some services are not healthy."
+        return 1
+    fi
+}
+
+cmd_help() {
+    cat <<EOF
+Usage: dev <command> [options]
+
+Commands:
+  up                  Build and start all services
+  down                Stop and remove containers
+  restart [service]   Restart all or one service
+  logs [service]      Follow logs (all or one service)
+  status              Show container status
+  db                  Open psql shell on the database
+  shell [service]     Open a shell in a container (default: api)
+  update              Pull latest images and rebuild
+  health              Check health of all services
+  help                Show this message
+
+EOF
+}
+
+# --- Dispatch ---
+COMMAND="${1:-help}"
+shift || true
+
+case "$COMMAND" in
+    up)       cmd_up "$@" ;;
+    down)     cmd_down "$@" ;;
+    restart)  cmd_restart "$@" ;;
+    logs)     cmd_logs "$@" ;;
+    status)   cmd_status "$@" ;;
+    db)       cmd_db "$@" ;;
+    shell)    cmd_shell "$@" ;;
+    update)   cmd_update "$@" ;;
+    health)   cmd_health "$@" ;;
+    help|--help|-h) cmd_help ;;
+    *)
+        error "Unknown command: $COMMAND"
+        cmd_help
+        exit 1
+        ;;
+esac
