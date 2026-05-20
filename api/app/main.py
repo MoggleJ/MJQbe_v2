@@ -17,7 +17,7 @@ def _load_config() -> dict:
 
 _config = _load_config()
 _srv = _config.get("server", {})
-_web_port = _srv.get("web_port", 4443)
+_web_port = _srv.get("web_port", 4444)
 _domain = _srv.get("domain", "") or ""
 _https = _srv.get("https", False)
 
@@ -47,6 +47,6 @@ def health():
 @app.get("/config/port")
 def config_port():
     return {
-        "web_port": _srv.get("web_port", 4443),
+        "web_port": _srv.get("web_port", 4444),
         "api_port": _srv.get("api_port", 4848),
     }

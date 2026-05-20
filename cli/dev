@@ -53,7 +53,7 @@ cmd_up() {
     _compose_dev  down --remove-orphans 2>/dev/null || true
     info "Démarrage des services (prod)..."
     _compose_prod --env-file "$ENV_FILE" up -d --build --force-recreate
-    success "Services démarrés → http://localhost:4443"
+    success "Services démarrés → http://localhost:4444"
 }
 
 cmd_down() {
@@ -69,7 +69,7 @@ cmd_watch() {
     _compose_prod down --remove-orphans 2>/dev/null || true
     _compose_dev  down --remove-orphans 2>/dev/null || true
     info "Démarrage en mode WATCH (hot-reload)..."
-    info "  Frontend : Vite HMR  → http://localhost:4443"
+    info "  Frontend : Vite HMR  → http://localhost:4444"
     info "  API      : uvicorn --reload"
     info "  Ctrl+C pour arrêter"
     _compose_dev --env-file "$ENV_FILE" up --build --force-recreate
