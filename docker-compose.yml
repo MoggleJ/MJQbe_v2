@@ -64,7 +64,7 @@ services:
     networks:
       - mjqbe-network
     ports:
-      - "0.0.0.0:8484:80"             # Écoute sur toutes les interfaces réseau
+      - "0.0.0.0:4444:80"             # Écoute sur toutes les interfaces réseau
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 15s
