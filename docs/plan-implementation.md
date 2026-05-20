@@ -4,6 +4,10 @@ Sprints basés sur les tâches à accomplir, pas sur le temps.
 
 Workflow de chaque sprint : voir `agents/sprint-workflow.md`.
 
+**Deux interfaces :**
+- **[WEB]** React + FastAPI — TV + Desktop uniquement, accès réseau, OAuth
+- **[NATIVE]** PySide6 + QML — TV + Desktop + Dev, local Pi, processus systemd
+
 ---
 
 ## Sprint 1 — Scaffolding & DevOps
@@ -19,7 +23,7 @@ Workflow de chaque sprint : voir `agents/sprint-workflow.md`.
 - [x] Écrire le fichier `.env.example` avec toutes les variables requises
 - [x] Ajouter `.gitignore`, `.dockerignore`
 - [x] Créer le script CLI `dev` (Bash) avec les commandes : `up`, `down`, `logs`, `restart`, `status`, `db`, `shell`, `update`
-- [x] Vérifier que `docker compose up` démarre sans erreur (voir `problemes.md` — nécessite `sudo usermod -aG docker $USER`)
+- [x] Vérifier que `docker compose up` démarre sans erreur (voir `problemes.md`)
 
 ### Livrable de vérification
 `dev up` → tous les conteneurs passent en `healthy` ou `running`.
@@ -44,7 +48,7 @@ Workflow de chaque sprint : voir `agents/sprint-workflow.md`.
 
 ---
 
-## Sprint 3 — Authentification
+## Sprint 3 — Authentification [WEB]
 
 **Objectif :** Système d'auth complet (local + OAuth) avec protection des routes.
 
@@ -65,7 +69,7 @@ Tests passent. `POST /auth/login` avec credentials valides retourne un JWT. Rout
 
 ---
 
-## Sprint 4 — API — Apps & Catégories
+## Sprint 4 — API — Apps & Catégories [WEB]
 
 **Objectif :** CRUD complet pour apps et catégories, filtrage par mode.
 
@@ -86,7 +90,7 @@ Tests passent. `GET /apps?mode=tv` retourne les apps TV du seed. `POST /apps` sa
 
 ---
 
-## Sprint 5 — API — Settings, Favorites, Logs
+## Sprint 5 — API — Settings, Favorites, Logs [WEB]
 
 **Objectif :** Données per-user (settings, favoris) et système de logs.
 
@@ -107,7 +111,7 @@ Tests passent. Changer le thème via `PUT /settings` persiste en base. Les favor
 
 ---
 
-## Sprint 6 — Frontend — Layout & Mode TV
+## Sprint 6 — Frontend Web — Layout & Mode TV [WEB]
 
 **Objectif :** Shell React fonctionnel avec sidebar et mode TV complet.
 
@@ -130,7 +134,7 @@ Tests passent. Changer le thème via `PUT /settings` persiste en base. Les favor
 
 ---
 
-## Sprint 7 — Frontend — Mode Desktop
+## Sprint 7 — Frontend Web — Mode Desktop [WEB]
 
 **Objectif :** Mode Desktop avec organisation avancée et recherche.
 
@@ -147,12 +151,12 @@ Switch TV/Desktop change le layout. La recherche filtre les apps en temps réel.
 
 ---
 
-## Sprint 8 — Frontend — UX & Animations
+## Sprint 8 — Frontend Web — UX & Animations [WEB]
 
 **Objectif :** Animations et page Settings.
 
 ### Tâches
-- [ ] Implémenter l'animation de chargement : cube MJQbe 3D en rotation (CSS 3D ou Three.js léger)
+- [ ] Implémenter l'animation de chargement : cube MJQbe 3D en rotation (CSS 3D)
 - [ ] Implémenter la transition de page : rotation cube vers le haut (CSS 3D transform)
 - [ ] Implémenter la page `Settings` : sélecteur de thème (10 options avec prévisualisation), layout, icon_size
 - [ ] Connecter les settings à l'API (`GET /settings`, `PUT /settings`)
@@ -163,42 +167,83 @@ Naviguer entre pages → animation cube visible. Changer le thème → appliqué
 
 ---
 
-## Sprint 9 — Mode Dev — Monitoring
+## Sprint 9 — App Native — Scaffolding PySide6/QML [NATIVE]
 
-**Objectif :** Dashboard de monitoring système dans le mode Dev.
+**Objectif :** Poser la structure de l'application native. Après ce sprint, la fenêtre s'ouvre sur le Pi.
 
 ### Tâches
-- [ ] Créer les endpoints API de monitoring : `GET /dev/stats` (CPU, RAM, disque, réseau, temp)
-- [ ] Ces endpoints lisent depuis le daemon C (ou `/proc` directement en Python si daemon absent)
-- [ ] Créer la page Dev mode dans le frontend (accessible local uniquement, gate IP)
-- [ ] Widgets : CPU usage, RAM, disque, réseau (graphes temps réel via polling)
-- [ ] Liste des processus (`GET /dev/processes`)
-- [ ] Liste des conteneurs Docker (`GET /dev/containers`)
-- [ ] Gate d'authentification admin avant affichage
+- [ ] Créer le dossier `native/` avec structure Clean Architecture
+- [ ] Installer PySide6 et configurer `requirements.txt` natif
+- [ ] Créer le service systemd `mjqbe-native.service`
+- [ ] Initialiser la fenêtre principale QML (plein écran, sidebar + zone contenu)
+- [ ] Implémenter le système de thèmes QML (10 thèmes via variables Qt)
+- [ ] Implémenter le composant `Sidebar` QML (titre dynamique, menu, heure)
+- [ ] Implémenter la navigation entre pages (avec animation cube QML)
+- [ ] Connecter la couche infrastructure : SQLAlchemy direct sur PostgreSQL
+- [ ] Authentification locale admin (PIN ou mot de passe hashé, stocké en base)
+- [ ] Stub pour développement hors Pi (désactive GPIO, utilise DB locale)
 
 ### Livrable de vérification
-Sur Pi local : mode Dev accessible → stats CPU/RAM s'affichent et se rafraîchissent.
+`python native/main.py` → fenêtre s'ouvre, sidebar visible, navigation fonctionne.
 
 ---
 
-## Sprint 10 — Mode Dev — Contrôle système
+## Sprint 10 — App Native — Mode TV + Desktop [NATIVE]
 
-**Objectif :** Terminal et gestion des serveurs.
+**Objectif :** Les deux modes de consommation fonctionnels dans l'app native.
 
 ### Tâches
-- [ ] Intégrer un terminal web (xterm.js + WebSocket vers l'API)
-- [ ] Endpoint WebSocket `WS /dev/terminal` (shell bash limité, nécessite re-auth admin)
-- [ ] Gestion des serveurs : `GET/POST /dev/servers` (liste, démarrer, arrêter un serveur Docker)
-- [ ] Page de gestion des processus (kill, nice)
-- [ ] Lien vers l'interface graphique légère du Pi (VNC ou X11 forwarding URL)
-- [ ] Confirmation d'identité avant action destructive (modal re-auth)
+- [ ] Implémenter la page `Home` QML (apps récentes / favorites)
+- [ ] Implémenter `AllApps` QML avec grille
+- [ ] Implémenter le mode TV : icônes larges, catégories visibles, navigation télécommande
+- [ ] Implémenter le mode Desktop : layout dense, catégories groupées
+- [ ] Créer le composant `AppCard` QML (icône + nom)
+- [ ] Implémenter la recherche temps réel
+- [ ] Implémenter les favoris (toggle, section dédiée)
+- [ ] Implémenter la page `Settings` QML (thème, layout, icon_size)
+- [ ] Ouvrir les apps : WebView embarquée ou `subprocess` navigateur
 
 ### Livrable de vérification
-Terminal web fonctionnel. Démarrer/arrêter un conteneur depuis l'UI.
+Mode TV : grille apps visible, navigation clavier/télécommande. Mode Desktop : layout dense. Favoris persistés.
 
 ---
 
-## Sprint 11 — Daemon C — GPIO
+## Sprint 11 — App Native — Mode Dev [NATIVE]
+
+**Objectif :** Dashboard de monitoring et contrôle système dans l'app native.
+
+### Tâches
+- [ ] Implémenter la page Dev mode QML (accessible après re-auth admin)
+- [ ] Widgets monitoring : CPU, RAM, disque, réseau, température (polling `/proc`)
+- [ ] Liste des processus (lecture `/proc`, kill/nice)
+- [ ] Liste des conteneurs Docker (appels `docker` subprocess)
+- [ ] Terminal intégré (QML + `QProcess` vers bash)
+- [ ] Gestion des serveurs hébergés (démarrer/arrêter conteneurs)
+- [ ] Lien vers interface graphique légère du Pi (lancer session X/Wayland)
+- [ ] Re-authentification obligatoire avant actions destructives
+
+### Livrable de vérification
+Sur Pi : mode Dev accessible après auth admin → stats CPU/RAM en temps réel → terminal fonctionnel.
+
+---
+
+## Sprint 12 — App Native — UX & Animations [NATIVE]
+
+**Objectif :** Animations GPU et polish de l'interface native.
+
+### Tâches
+- [ ] Animation de chargement : cube MJQbe 3D en rotation (QML + OpenGL ES)
+- [ ] Transition de page : rotation cube vers le haut (QML `SequentialAnimation`)
+- [ ] Optimiser le rendu QML (layers, `smooth`, `antialiasing` ciblés)
+- [ ] Profiler la mémoire native (cible < 150 Mo RAM)
+- [ ] Navigation télécommande complète (KeyNavigation QML sur toutes les pages)
+
+### Livrable de vérification
+Transitions fluides sur Pi. `htop` montre < 150 Mo RAM pour le process natif.
+
+---
+
+## Sprint 13 — Daemon C — GPIO
 
 **Objectif :** Daemon C opérationnel pour contrôle GPIO.
 
@@ -207,6 +252,7 @@ Terminal web fonctionnel. Démarrer/arrêter un conteneur depuis l'UI.
 - [ ] Implémenter : `gpio_set`, `gpio_get`, `relay_set` (contrôle relais)
 - [ ] Implémenter : `led_set` (RGB si applicable)
 - [ ] Client Python dans l'API (`infrastructure/hardware/`) pour communiquer avec le daemon
+- [ ] Client Python dans le natif (`native/app/infrastructure/hardware/`) — même interface
 - [ ] Stub Python pour développement hors Pi
 - [ ] Endpoints API : `POST /dev/gpio`, `POST /dev/relay`
 - [ ] Ajouter `dev gpio <pin> <val>` au CLI
@@ -216,7 +262,7 @@ Sur Pi : `dev gpio 23 1` allume le relais 1.
 
 ---
 
-## Sprint 12 — Daemon C — AV (IR + CEC + Bluetooth)
+## Sprint 14 — Daemon C — AV (IR + CEC + Bluetooth)
 
 **Objectif :** Contrôle TV, PS4 et télécommande IR.
 
@@ -225,42 +271,43 @@ Sur Pi : `dev gpio 23 1` allume le relais 1.
 - [ ] Mapper les codes IR aux actions (allumage hub, navigation)
 - [ ] Implémenter HDMI CEC via libCEC : `tv_on`, `tv_off`, `ps4_on`, `ps4_off`
 - [ ] Implémenter communication HC-05 (UART, parse commandes BT)
-- [ ] Endpoints API : `POST /dev/av` avec actions `tv_on`, `tv_off`, etc.
-- [ ] Intégrer dans le mode Dev UI (boutons de contrôle AV)
+- [ ] Boutons de contrôle AV dans le mode Dev natif
+- [ ] Endpoints API web : `POST /dev/av`
 
 ### Livrable de vérification
-Sur Pi : bouton "Allume TV" dans l'UI → TV s'allume via CEC. Télécommande IR → allume le hub.
+Sur Pi : bouton "Allume TV" dans l'app native → TV s'allume via CEC. Télécommande IR → allume le hub.
 
 ---
 
-## Sprint 13 — Reconnaissance vocale
+## Sprint 15 — Reconnaissance vocale
 
 **Objectif :** Wake word + commandes vocales.
 
 ### Tâches
-- [ ] Intégrer Vosk (offline, léger) ou Whisper (plus précis) pour reconnaissance vocale
-- [ ] Implémenter détection du wake word (ex: "MJQbe" ou "OK hub")
+- [ ] Intégrer Vosk (offline, léger) pour reconnaissance vocale
+- [ ] Implémenter détection du wake word (ex: "OK hub")
 - [ ] Parser les commandes : "allume la TV", "éteins la TV", "lance Netflix"
-- [ ] Connecter les commandes aux actions existantes (CEC, GPIO, API)
+- [ ] Connecter les commandes aux actions existantes (CEC, GPIO)
 - [ ] Lier avec ISD1820 (déclenchement GPIO) ou micro USB en continu
-- [ ] Ajouter indicateur visuel dans l'UI quand le wake word est détecté
+- [ ] Indicateur visuel dans l'app native quand le wake word est détecté
 
 ### Livrable de vérification
-Sur Pi : dire "MJQbe allume la TV" → TV s'allume.
+Sur Pi : dire "OK hub allume la TV" → TV s'allume.
 
 ---
 
-## Sprint 14 — CLI `dev` — Version complète
+## Sprint 16 — CLI `dev` — Version complète
 
 **Objectif :** CLI Bash complète avec toutes les fonctionnalités.
 
 ### Tâches
-- [ ] Ajouter les commandes manquantes : `dev update`, `dev sprint`, `dev gpio`
-- [ ] `dev sprint` : exécute le workflow complet de sprint (voir `agents/sprint-workflow.md`)
+- [ ] Ajouter `dev native` : démarrer/arrêter l'app native
+- [ ] `dev sprint` : exécute le workflow complet de sprint
 - [ ] `dev health` : vérifie l'état de tous les services + connectivité DB
 - [ ] `dev backup` : backup PostgreSQL vers fichier daté
 - [ ] `dev restore <file>` : restaure un backup
 - [ ] `dev logs` avec filtre par niveau (error, warning, info)
+- [ ] `dev gpio <pin> <val>` : contrôle GPIO direct
 - [ ] Installer le script en tant que commande système (`/usr/local/bin/dev`)
 - [ ] Documenter chaque commande (`dev help`)
 
@@ -269,20 +316,20 @@ Sur Pi : dire "MJQbe allume la TV" → TV s'allume.
 
 ---
 
-## Sprint 15 — Sécurité, optimisation & déploiement final
+## Sprint 17 — Sécurité, optimisation & déploiement final
 
 **Objectif :** Audit de sécurité, optimisation mémoire, déploiement production.
 
 ### Tâches
-- [ ] Audit de sécurité : vérifier CORS, headers HTTP (HSTS, CSP), injection SQL (Pydantic)
+- [ ] Audit de sécurité web : CORS, headers HTTP (HSTS, CSP), injection SQL (Pydantic)
 - [ ] Rate limiting sur les endpoints d'authentification
-- [ ] Profiling mémoire sur Pi 4 : identifier les services gourmands
+- [ ] Profiling mémoire sur Pi 4 : web stack + app native
 - [ ] Optimiser les images Docker (multi-stage builds, alpine)
 - [ ] Configurer HTTPS (certificat auto-signé ou Let's Encrypt si domaine)
-- [ ] Tests de charge légers (vérifier comportance sous plusieurs connexions)
+- [ ] Tests de charge légers
 - [ ] Documenter la procédure de déploiement production dans `docs/deploiement.md`
 - [ ] Créer les GitHub Actions pour CI (tests automatiques sur push)
 - [ ] Revue finale vs `docs/CDC.md` (checklist complète)
 
 ### Livrable de vérification
-Tous les tests passent. Audit OWASP Top 10 coché. `docker stats` sur Pi montre une consommation mémoire acceptable.
+Tous les tests passent. Audit OWASP Top 10 coché. `docker stats` + `htop` sur Pi montrent une consommation mémoire acceptable.
