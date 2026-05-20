@@ -27,10 +27,14 @@
 
 | Service | Image | Port | Rôle |
 |---|---|---|---|
-| `db` | postgres:15 | 5432 | Base de données PostgreSQL |
-| `api` | ./api (Python) | 8000 | Backend FastAPI |
-| `frontend` | ./frontend (React + Nginx) | 3000 | Interface web servie par Nginx |
+| `db` | postgres:15 | 5432 (interne) | Base de données PostgreSQL |
+| `api` | ./api (Python) | **4848** | Backend FastAPI |
+| `frontend` | ./frontend (React + Nginx) | **8484** | Interface web servie par Nginx |
 | `daemon` | ./daemon (C) | — | Contrôle matériel (Pi uniquement) |
+
+**Ports configurables dans `config/config.yml`** :
+- `server.api_port` : 4848
+- `server.web_port` : 8484
 
 **Réseau Docker :** `mjqbe-network` (bridge interne, seuls `frontend` et `api` exposent des ports)
 

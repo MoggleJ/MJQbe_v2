@@ -90,9 +90,9 @@ Tests passent. `GET /apps?mode=tv` retourne les apps TV du seed. `POST /apps` sa
 
 ---
 
-## Sprint 5 — API — Settings, Favorites, Logs [WEB]
+## Sprint 5 — API — Settings, Favorites, Logs & Admin Système [WEB]
 
-**Objectif :** Données per-user (settings, favoris) et système de logs.
+**Objectif :** Données per-user (settings, favoris), logs, et administration système.
 
 ### Tâches
 - [ ] `GET /settings` — settings de l'utilisateur connecté
@@ -104,14 +104,20 @@ Tests passent. `GET /apps?mode=tv` retourne les apps TV du seed. `POST /apps` sa
 - [ ] Middleware de logging : enregistrer `app_launch` à chaque `GET /apps/:id` par un user connecté
 - [ ] `GET /admin/logs` — liste des logs (admin, avec pagination)
 - [ ] `GET /admin/users` — liste des users (admin)
+- [ ] `GET /admin/config` — lire `config/config.yml` (admin)
+- [ ] `PUT /admin/config` — écrire `config/config.yml` + valider la structure (admin)
+- [ ] `GET /admin/services` — état de chaque service Docker (via socket Docker)
+- [ ] `POST /admin/services/:name/restart` — redémarrer un service Docker (admin)
+- [ ] `POST /admin/services/:name/stop` — arrêter un service (admin)
+- [ ] `POST /admin/reboot` — redémarrer tous les services (admin, re-auth obligatoire)
 - [ ] Écrire les tests
 
 ### Livrable de vérification
-Tests passent. Changer le thème via `PUT /settings` persiste en base. Les favoris sont isolés par user.
+Tests passent. `PUT /admin/config` modifie `config.yml`. `POST /admin/services/api/restart` redémarre le conteneur.
 
 ---
 
-## Sprint 6 — Frontend Web — Layout & Mode TV [WEB]
+## Sprint 6 — Frontend Web — Layout, Mode TV & Admin Panel [WEB]
 
 **Objectif :** Shell React fonctionnel avec sidebar et mode TV complet.
 
@@ -128,9 +134,12 @@ Tests passent. Changer le thème via `PUT /settings` persiste en base. Les favor
 - [ ] Implémenter la page de login (formulaire + OAuth buttons)
 - [ ] Gérer le JWT côté client (stockage, refresh automatique)
 - [ ] Responsive : TV (1920px), desktop (1280px), tablette (768px), mobile (375px)
+- [ ] Page `Admin` : liste des users, gestion apps/catégories
+- [ ] Page `Admin > Système` : affichage config.yml éditable (formulaire), état des services Docker
+- [ ] Boutons restart par service + bouton "Reboot tout" (avec modal de confirmation + re-auth)
 
 ### Livrable de vérification
-`dev up` → `http://localhost:3000` → login → mode TV affiche les apps Netflix, YouTube etc. → sidebar fonctionne.
+`dev up` → `http://localhost:8484` → login → mode TV affiche les apps → admin panel accessible → modifier config.yml via l'UI persiste le fichier.
 
 ---
 
