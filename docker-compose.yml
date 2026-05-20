@@ -57,10 +57,14 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    environment:
+      # Domaine nginx — vide ou "_" = répond à tout (IP directe + tout domaine)
+      # Pour activer un domaine : modifier server.domain dans config/config.yml
+      SERVER_NAME: ${SERVER_NAME:-_}
     networks:
       - mjqbe-network
     ports:
-      - "8484:80"                     # Port web configurable — défaut 8484
+      - "0.0.0.0:8484:80"             # Écoute sur toutes les interfaces réseau
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 15s

@@ -16,10 +16,19 @@ def _load_config() -> dict:
 
 
 _config = _load_config()
+_srv = _config.get("server", {})
+_web_port = _srv.get("web_port", 8484)
+_domain = _srv.get("domain", "") or ""
+_https = _srv.get("https", False)
+
 _allowed_origins = [
-    f"http://localhost:{_config.get('server', {}).get('web_port', 8484)}",
+    f"http://localhost:{_web_port}",
     "http://localhost:5173",  # vite dev server
 ]
+if _domain:
+    scheme = "https" if _https else "http"
+    _allowed_origins.append(f"{scheme}://{_domain}")
+    _allowed_origins.append(f"{scheme}://{_domain}:{_web_port}")
 
 app.add_middleware(
     CORSMiddleware,

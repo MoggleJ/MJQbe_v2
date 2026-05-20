@@ -36,7 +36,47 @@
 - `server.api_port` : 4848
 - `server.web_port` : 8484
 
+**Accès réseau :**
+- Le frontend écoute sur `0.0.0.0:8484` → accessible par IP directe ET par nom de domaine
+- Accessible depuis : `http://<ip-du-pi>:8484` ou `http://<domaine>:8484`
+
 **Réseau Docker :** `mjqbe-network` (bridge interne, seuls `frontend` et `api` exposent des ports)
+
+---
+
+## 2b. Configuration du domaine
+
+### Fonctionnement
+L'accès par domaine est géré sans configuration supplémentaire grâce à `server_name _` (nginx répond à toute requête).
+
+Quand tu as un domaine, **une seule modification** suffit dans `config/config.yml` :
+
+```yaml
+server:
+  domain: "mjqbe.example.com"   # ← changer cette ligne
+  https: false                   # ← passer à true pour HTTPS (sprint 17)
+```
+
+Puis relancer :
+```bash
+dev up
+```
+
+### Ce qui est mis à jour automatiquement
+| Composant | Comportement |
+|---|---|
+| Nginx `server_name` | Passe de `_` à `mjqbe.example.com` |
+| API CORS | Ajoute `http(s)://mjqbe.example.com` aux origines autorisées |
+| HTTPS (sprint 17) | Nginx passe en TLS avec le certificat configuré |
+
+### Flux complet
+```
+dev up
+  └─ cli/dev lit config.yml → export SERVER_NAME=mjqbe.example.com
+       └─ docker-compose injecte SERVER_NAME dans le conteneur frontend
+            └─ envsubst génère nginx.conf avec server_name mjqbe.example.com
+       └─ api lit config.yml → ajoute https://mjqbe.example.com aux CORS
+```
 
 **Volumes :**
 - `postgres_data` → persistance BDD

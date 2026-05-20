@@ -10,6 +10,19 @@ server:
   # Hôte d'écoute de l'API (0.0.0.0 = toutes interfaces)
   api_host: "0.0.0.0"
 
+  # Nom de domaine (laisser vide pour accès par IP uniquement)
+  # Exemple : "mjqbe.home" ou "mjqbe.example.com"
+  # Quand défini : CORS et nginx server_name sont mis à jour automatiquement.
+  # Seul changement requis pour activer un domaine : renseigner ce champ + dev up
+  domain: ""
+
+  # HTTPS — activer quand le domaine est défini (sprint 17)
+  https: false
+  # Chemin vers le certificat TLS (si https: true)
+  cert_path: "/etc/nginx/certs/cert.pem"
+  # Chemin vers la clé privée TLS
+  cert_key_path: "/etc/nginx/certs/key.pem"
+
 database:
   # Port PostgreSQL (interne Docker uniquement)
   port: 5432
