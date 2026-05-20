@@ -118,12 +118,26 @@ cmd_health() {
     fi
 }
 
+cmd_watch() {
+    require_env
+    info "Starting in WATCH mode (hot-reload)..."
+    info "  Frontend : Vite HMR → http://localhost:8484"
+    info "  API      : uvicorn --reload (restart auto sur changement Python)"
+    info "  Ctrl+C pour arrêter"
+    docker compose \
+        -f "$COMPOSE_FILE" \
+        -f "$PROJECT_ROOT/docker-compose.dev.yml" \
+        --env-file "$ENV_FILE" \
+        up --build
+}
+
 cmd_help() {
     cat <<EOF
 Usage: dev <command> [options]
 
 Commands:
-  up                  Build and start all services
+  up                  Build and start all services (production)
+  watch               Démarrer en mode hot-reload (Vite HMR + uvicorn --reload)
   down                Stop and remove containers
   restart [service]   Restart all or one service
   logs [service]      Follow logs (all or one service)
@@ -143,6 +157,7 @@ shift || true
 
 case "$COMMAND" in
     up)       cmd_up "$@" ;;
+    watch)    cmd_watch "$@" ;;
     down)     cmd_down "$@" ;;
     restart)  cmd_restart "$@" ;;
     logs)     cmd_logs "$@" ;;

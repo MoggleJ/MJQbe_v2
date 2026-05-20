@@ -1,0 +1,12 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Installation des dépendances séparée du code source
+# (le répertoire source est monté en volume — node_modules reste dans le conteneur)
+COPY package*.json ./
+RUN npm install
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
