@@ -26,4 +26,4 @@ services:
       - ./api:/app
       - ./config:/app/config
       - daemon-socket:/run/mjqbe
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4848", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${API_PORT:-4848}", "--reload"]

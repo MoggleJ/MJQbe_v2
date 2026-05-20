@@ -11,5 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 4848
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4848"]
+ARG API_PORT=4848
+EXPOSE ${API_PORT}
+ENV API_PORT=${API_PORT}
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT:-4848}
