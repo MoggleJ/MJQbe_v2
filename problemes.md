@@ -57,3 +57,67 @@ sudo chown root:docker /var/run/docker.sock
 **Solution :** Utiliser `build-essential` à la place de `gcc` dans `daemon/Dockerfile`.
 
 **Statut :** Résolu
+
+---
+
+## P4 — Docker Compose port merge : double-bind du port frontend
+
+**Symptôme :** `Bind for 0.0.0.0:4444 failed: port is already allocated` quand on lance le stack dev alors qu'aucun autre processus n'écoute. Les deux fichiers compose tentent de binder le même port.
+
+**Cause :** Docker Compose **fusionne** les listes de ports quand on empile plusieurs fichiers avec `-f base -f override`. Si `docker-compose.yml` déclare déjà `ports: ["4444:80"]` pour `frontend`, et que `docker-compose.dev.yml` déclare `ports: ["4444:5173"]`, les deux entrées coexistent → double-bind.
+
+**Solution :** Retirer tous les ports du frontend de `docker-compose.yml` (base). Les ports sont déclarés uniquement dans les overrides :
+- `docker-compose.prod.yml` : `0.0.0.0:${WEB_PORT:-4444}:80`
+- `docker-compose.dev.yml` : `0.0.0.0:${WEB_PORT:-4444}:5173`
+
+**Statut :** Résolu
+
+---
+
+## P5 — SQLAlchemy : `metadata` est un nom réservé
+
+**Symptôme :** `AttributeError` ou comportement inattendu sur le modèle `Log` au démarrage de l'API.
+
+**Cause :** `DeclarativeBase` de SQLAlchemy expose un attribut de classe `metadata` (le `MetaData` du schéma). Nommer une colonne `metadata` écrase cet attribut.
+
+**Solution :**
+```python
+# Dans api/app/domain/entities/log.py
+meta = Column("metadata", JSONB)  # attribut Python "meta", colonne SQL "metadata"
+```
+
+**Statut :** Résolu
+
+---
+
+## P6 — Port API hardcodé dans docker-compose.dev.yml et Dockerfile
+
+**Symptôme :** Changer `api_port` dans `config/config.yml` ne prenait pas effet pour le conteneur API en mode dev — le port 4848 restait hardcodé.
+
+**Cause :** Deux emplacements hardcodaient le port :
+1. `docker-compose.dev.yml` : `command: ["uvicorn", ..., "--port", "4848"]`
+2. `api/Dockerfile` : `CMD ["uvicorn", ..., "--port", "4848"]` (exec form, pas d'expansion de variable)
+
+**Solution :**
+- `docker-compose.dev.yml` : utiliser `"${API_PORT:-4848}"` dans la commande
+- `api/Dockerfile` : passer en shell form + ARG/ENV :
+```dockerfile
+ARG API_PORT=4848
+EXPOSE ${API_PORT}
+ENV API_PORT=${API_PORT}
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT:-4848}
+```
+
+**Statut :** Résolu
+
+---
+
+## P7 — npm ci échoue : package-lock.json absent
+
+**Symptôme :** `npm ci` échoue dans le Dockerfile frontend avec `npm error The \`npm ci\` command can only install with an existing package-lock.json`.
+
+**Cause :** Le repo ne contenait pas de `package-lock.json` au moment du Sprint 1 — fichier généré par `npm install`, pas présent avant le premier build.
+
+**Solution :** Utiliser `npm install` à la place de `npm ci` dans `frontend/Dockerfile` et `frontend/Dockerfile.dev`.
+
+**Statut :** Résolu
