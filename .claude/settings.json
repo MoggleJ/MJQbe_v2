@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s http://localhost:8484/api/config/port)",
+      "Bash(curl -s -H \"Origin: http://localhost:8484\" -I http://localhost:4848/health)",
+      "Bash(curl -s -H \"Origin: http://random.domain\" -I http://localhost:4848/health)",
+      "Bash(git rm *)",
+      "Bash(netstat -tlnp)",
+      "Bash(sudo docker ps -a --filter \"publish=8484\" --format \"{{.ID}} {{.Names}} {{.Status}}\")",
+      "Bash(sudo docker ps -a --format \"{{.ID}} {{.Names}} {{.Status}} {{.Ports}}\")",
+      "Bash(sudo rm -rf /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2/api/ /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2/frontend/)",
+      "Bash(git -C /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2 status --short)",
+      "Bash(git -C /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2 branch)"
+    ]
+  }
+}

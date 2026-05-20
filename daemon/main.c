@@ -6,69 +6,48 @@
 #include <sys/un.h>
 #include <signal.h>
 
-#define SOCKET_PATH_ENV "DAEMON_SOCKET"
-#define SOCKET_PATH_DEFAULT "/run/mjqbe/daemon.sock"
-#define BUFFER_SIZE 4096
+#define SOCK_PATH "/run/mjqbe/daemon.sock"
+#define BUF_SIZE  4096
 
-static volatile int running = 1;
+static int server_fd = -1;
 
-static void handle_signal(int sig) {
+static void cleanup(int sig) {
     (void)sig;
-    running = 0;
+    if (server_fd >= 0) close(server_fd);
+    unlink(SOCK_PATH);
+    exit(0);
 }
 
 int main(void) {
-    const char *socket_path = getenv(SOCKET_PATH_ENV);
-    if (!socket_path)
-        socket_path = SOCKET_PATH_DEFAULT;
+    struct sockaddr_un addr;
+    signal(SIGINT, cleanup);
+    signal(SIGTERM, cleanup);
 
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server_fd < 0) { perror("socket"); return 1; }
 
-    int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        perror("socket");
-        return EXIT_FAILURE;
-    }
-
-    struct sockaddr_un addr = {0};
+    unlink(SOCK_PATH);
+    memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, SOCK_PATH, sizeof(addr.sun_path) - 1);
 
-    unlink(socket_path);
-    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("bind");
-        close(server_fd);
-        return EXIT_FAILURE;
-    }
+    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("bind"); return 1; }
+    if (listen(server_fd, 5) < 0) { perror("listen"); return 1; }
 
-    if (listen(server_fd, 5) < 0) {
-        perror("listen");
-        close(server_fd);
-        return EXIT_FAILURE;
-    }
+    printf("[daemon] listening on %s\n", SOCK_PATH);
+    fflush(stdout);
 
-    printf("mjqbe-daemon listening on %s\n", socket_path);
-
-    while (running) {
-        int client_fd = accept(server_fd, NULL, NULL);
-        if (client_fd < 0) {
-            if (running)
-                perror("accept");
-            continue;
-        }
-
-        char buf[BUFFER_SIZE] = {0};
-        ssize_t n = read(client_fd, buf, sizeof(buf) - 1);
+    for (;;) {
+        int client = accept(server_fd, NULL, NULL);
+        if (client < 0) continue;
+        char buf[BUF_SIZE];
+        ssize_t n = read(client, buf, sizeof(buf) - 1);
         if (n > 0) {
-            printf("Received: %s\n", buf);
+            buf[n] = '\0';
             const char *resp = "{\"status\":\"ok\"}\n";
-            write(client_fd, resp, strlen(resp));
+            write(client, resp, strlen(resp));
         }
-        close(client_fd);
+        close(client);
     }
-
-    close(server_fd);
-    unlink(socket_path);
-    return EXIT_SUCCESS;
+    return 0;
 }

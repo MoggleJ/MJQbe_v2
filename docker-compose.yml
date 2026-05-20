@@ -1,18 +1,15 @@
 services:
+
   db:
     image: postgres:15-alpine
-    container_name: mjqbe-db
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file: .env
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
       - mjqbe-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mjqbe} -d ${POSTGRES_DB:-mjqbe}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,28 +17,21 @@ services:
   api:
     build:
       context: ./api
-      dockerfile: Dockerfile
-    container_name: mjqbe-api
     restart: unless-stopped
+    env_file: .env
+    environment:
+      CONFIG_PATH: /app/config/config.yml
+    volumes:
+      - ./config:/app/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - daemon-socket:/run/mjqbe
+    ports:
+      - "4848:4848"
+    networks:
+      - mjqbe-network
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      SECRET_KEY: ${SECRET_KEY}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-      CONFIG_PATH: /app/config/config.yml
-    volumes:
-      - daemon-socket:/run/mjqbe
-      - ./config:/app/config          # config.yml lisible et modifiable par l'API
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # pour restart services depuis l'admin
-    networks:
-      - mjqbe-network
-    ports:
-      - "4848:4848"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4848/health"]
       interval: 15s
@@ -51,20 +41,18 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: mjqbe-frontend
     restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-_}
+    volumes:
+      - ./config:/app/config:ro
+    networks:
+      - mjqbe-network
     depends_on:
       api:
         condition: service_healthy
-    environment:
-      # Domaine nginx — vide ou "_" = répond à tout (IP directe + tout domaine)
-      # Pour activer un domaine : modifier server.domain dans config/config.yml
-      SERVER_NAME: ${SERVER_NAME:-_}
-    networks:
-      - mjqbe-network
     ports:
-      - "0.0.0.0:4444:80"             # Écoute sur toutes les interfaces réseau
+      - "0.0.0.0:4443:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 15s
@@ -74,17 +62,13 @@ services:
   daemon:
     build:
       context: ./daemon
-      dockerfile: Dockerfile
-    container_name: mjqbe-daemon
     restart: unless-stopped
     privileged: true
     volumes:
       - daemon-socket:/run/mjqbe
-      - ./config:/app/config
+      - ./config:/app/config:ro
     networks:
       - mjqbe-network
-    environment:
-      CONFIG_PATH: /app/config/config.yml
 
 networks:
   mjqbe-network:

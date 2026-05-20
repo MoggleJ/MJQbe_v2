@@ -29,16 +29,16 @@
 |---|---|---|---|
 | `db` | postgres:15 | 5432 (interne) | Base de données PostgreSQL |
 | `api` | ./api (Python) | **4848** | Backend FastAPI |
-| `frontend` | ./frontend (React + Nginx) | **8484** | Interface web servie par Nginx |
+| `frontend` | ./frontend (React + Nginx) | **4443** | Interface web servie par Nginx |
 | `daemon` | ./daemon (C) | — | Contrôle matériel (Pi uniquement) |
 
 **Ports configurables dans `config/config.yml`** :
 - `server.api_port` : 4848
-- `server.web_port` : 8484
+- `server.web_port` : 4443
 
 **Accès réseau :**
-- Le frontend écoute sur `0.0.0.0:8484` → accessible par IP directe ET par nom de domaine
-- Accessible depuis : `http://<ip-du-pi>:8484` ou `http://<domaine>:8484`
+- Le frontend écoute sur `0.0.0.0:4443` → accessible par IP directe ET par nom de domaine
+- Accessible depuis : `http://<ip-du-pi>:4443` ou `http://<domaine>:4443`
 
 **Réseau Docker :** `mjqbe-network` (bridge interne, seuls `frontend` et `api` exposent des ports)
 

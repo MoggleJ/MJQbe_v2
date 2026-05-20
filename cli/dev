@@ -4,11 +4,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+COMPOSE_DEV_FILE="$PROJECT_ROOT/docker-compose.dev.yml"
 ENV_FILE="$PROJECT_ROOT/.env"
 CONFIG_FILE="$PROJECT_ROOT/config/config.yml"
 
-# Lit server.domain dans config.yml et l'exporte pour docker-compose
-# Pas besoin de python — grep/awk suffisent pour ce champ simple
+# Si Docker n'est pas accessible mais que l'user est dans le groupe docker,
+# ré-exécuter avec sg docker pour activer le groupe sans se reconnecter.
+if ! docker info &>/dev/null 2>&1 && id -nG 2>/dev/null | grep -qw docker; then
+    exec sg docker "$0" "$@"
+fi
+
 _read_domain() {
     local domain
     domain=$(grep -E '^\s*domain:' "$CONFIG_FILE" 2>/dev/null | awk -F': ' '{print $2}' | tr -d '"' | xargs)
@@ -30,33 +35,49 @@ error()   { echo -e "${RED}[dev]${NC} $*" >&2; }
 
 require_env() {
     if [[ ! -f "$ENV_FILE" ]]; then
-        warn ".env not found — copying from .env.example"
+        warn ".env not found — copie depuis .env.example"
         cp "$PROJECT_ROOT/.env.example" "$ENV_FILE"
-        warn "Edit $ENV_FILE before running services."
+        warn "Édite $ENV_FILE avant de lancer les services."
     fi
 }
 
+_compose()     { docker compose -f "$COMPOSE_FILE" "$@"; }
+_compose_dev() { docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_DEV_FILE" "$@"; }
+
 cmd_up() {
     require_env
-    info "Starting all services..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
-    success "Services started. Run 'dev status' to check health."
+    info "Nettoyage des conteneurs résiduels..."
+    _compose down --remove-orphans 2>/dev/null || true
+    info "Démarrage des services..."
+    _compose --env-file "$ENV_FILE" up -d --build --force-recreate
+    success "Services démarrés. Lance 'dev status' pour vérifier."
 }
 
 cmd_down() {
-    info "Stopping all services..."
-    docker compose -f "$COMPOSE_FILE" down
-    success "Services stopped."
+    info "Arrêt des services..."
+    _compose down --remove-orphans
+    success "Services arrêtés."
+}
+
+cmd_watch() {
+    require_env
+    info "Nettoyage des conteneurs résiduels..."
+    _compose_dev down --remove-orphans 2>/dev/null || true
+    info "Démarrage en mode WATCH (hot-reload)..."
+    info "  Frontend : Vite HMR  → http://localhost:4443"
+    info "  API      : uvicorn --reload"
+    info "  Ctrl+C pour arrêter"
+    _compose_dev --env-file "$ENV_FILE" up --build --force-recreate
 }
 
 cmd_restart() {
     local service="${1:-}"
     if [[ -n "$service" ]]; then
-        info "Restarting service: $service"
-        docker compose -f "$COMPOSE_FILE" restart "$service"
+        info "Redémarrage du service : $service"
+        _compose restart "$service"
     else
-        info "Restarting all services..."
-        docker compose -f "$COMPOSE_FILE" restart
+        info "Redémarrage de tous les services..."
+        _compose restart
     fi
     success "Done."
 }
@@ -64,40 +85,40 @@ cmd_restart() {
 cmd_logs() {
     local service="${1:-}"
     if [[ -n "$service" ]]; then
-        docker compose -f "$COMPOSE_FILE" logs -f "$service"
+        _compose logs -f "$service"
     else
-        docker compose -f "$COMPOSE_FILE" logs -f
+        _compose logs -f
     fi
 }
 
 cmd_status() {
-    info "Service status:"
-    docker compose -f "$COMPOSE_FILE" ps
+    info "État des services :"
+    _compose ps
 }
 
 cmd_db() {
     require_env
     # shellcheck source=/dev/null
     source "$ENV_FILE"
-    info "Connecting to PostgreSQL..."
-    docker compose -f "$COMPOSE_FILE" exec db psql -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}"
+    info "Connexion à PostgreSQL..."
+    _compose exec db psql -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}"
 }
 
 cmd_shell() {
     local service="${1:-api}"
-    info "Opening shell in service: $service"
-    docker compose -f "$COMPOSE_FILE" exec "$service" /bin/sh
+    info "Shell dans le service : $service"
+    _compose exec "$service" /bin/sh
 }
 
 cmd_update() {
-    info "Pulling latest images and rebuilding..."
-    docker compose -f "$COMPOSE_FILE" pull
-    docker compose -f "$COMPOSE_FILE" up -d --build
-    success "Update complete."
+    info "Pull des dernières images et rebuild..."
+    _compose pull
+    _compose up -d --build --force-recreate
+    success "Mise à jour terminée."
 }
 
 cmd_health() {
-    info "Checking service health..."
+    info "Vérification de la santé des services..."
     local all_ok=true
     while IFS= read -r line; do
         if echo "$line" | grep -q "healthy\|running"; then
@@ -108,50 +129,36 @@ cmd_health() {
         else
             echo -e "  ${YELLOW}?${NC} $line"
         fi
-    done < <(docker compose -f "$COMPOSE_FILE" ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null | tail -n +2)
+    done < <(_compose ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null | tail -n +2)
 
     if $all_ok; then
-        success "All services healthy."
+        success "Tous les services sont sains."
     else
-        error "Some services are not healthy."
+        error "Certains services ne sont pas sains."
         return 1
     fi
 }
 
-cmd_watch() {
-    require_env
-    info "Starting in WATCH mode (hot-reload)..."
-    info "  Frontend : Vite HMR → http://localhost:8484"
-    info "  API      : uvicorn --reload (restart auto sur changement Python)"
-    info "  Ctrl+C pour arrêter"
-    docker compose \
-        -f "$COMPOSE_FILE" \
-        -f "$PROJECT_ROOT/docker-compose.dev.yml" \
-        --env-file "$ENV_FILE" \
-        up --build
-}
-
 cmd_help() {
     cat <<EOF
-Usage: dev <command> [options]
+Usage: dev <commande> [options]
 
-Commands:
-  up                  Build and start all services (production)
-  watch               Démarrer en mode hot-reload (Vite HMR + uvicorn --reload)
-  down                Stop and remove containers
-  restart [service]   Restart all or one service
-  logs [service]      Follow logs (all or one service)
-  status              Show container status
-  db                  Open psql shell on the database
-  shell [service]     Open a shell in a container (default: api)
-  update              Pull latest images and rebuild
-  health              Check health of all services
-  help                Show this message
+Commandes :
+  up                  Build et démarre tous les services
+  watch               Mode hot-reload (Vite HMR + uvicorn --reload)
+  down                Arrête et supprime les conteneurs
+  restart [service]   Redémarre tous les services ou un seul
+  logs [service]      Affiche les logs en direct
+  status              État des conteneurs
+  db                  Ouvre un shell psql
+  shell [service]     Ouvre un shell dans un conteneur (défaut : api)
+  update              Pull + rebuild + restart
+  health              Vérifie la santé de chaque service
+  help                Affiche ce message
 
 EOF
 }
 
-# --- Dispatch ---
 COMMAND="${1:-help}"
 shift || true
 
@@ -168,7 +175,7 @@ case "$COMMAND" in
     health)   cmd_health "$@" ;;
     help|--help|-h) cmd_help ;;
     *)
-        error "Unknown command: $COMMAND"
+        error "Commande inconnue : $COMMAND"
         cmd_help
         exit 1
         ;;

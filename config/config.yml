@@ -3,60 +3,41 @@
 # Les secrets (mots de passe, clés OAuth) restent dans .env — jamais ici.
 
 server:
-  # Port exposé pour l'interface web (accessible depuis le réseau)
-  web_port: 8484
-  # Port de l'API FastAPI
+  web_port: 4443
   api_port: 4848
-  # Hôte d'écoute de l'API (0.0.0.0 = toutes interfaces)
   api_host: "0.0.0.0"
 
-  # Nom de domaine (laisser vide pour accès par IP uniquement)
+  # Laisser vide pour accès par IP uniquement.
   # Exemple : "mjqbe.home" ou "mjqbe.example.com"
-  # Quand défini : CORS et nginx server_name sont mis à jour automatiquement.
-  # Seul changement requis pour activer un domaine : renseigner ce champ + dev up
+  # Un seul changement ici + dev up active le domaine partout (nginx + CORS).
   domain: ""
 
-  # HTTPS — activer quand le domaine est défini (sprint 17)
   https: false
-  # Chemin vers le certificat TLS (si https: true)
   cert_path: "/etc/nginx/certs/cert.pem"
-  # Chemin vers la clé privée TLS
   cert_key_path: "/etc/nginx/certs/key.pem"
 
 database:
-  # Port PostgreSQL (interne Docker uniquement)
   port: 5432
-  # Taille du pool de connexions
   pool_size: 5
   max_overflow: 10
 
 auth:
-  # Durée de validité des tokens JWT
   access_token_expire_minutes: 60
   refresh_token_expire_days: 30
 
 logging:
-  # Niveaux : debug | info | warning | error
   level: "info"
-  # Activer les logs d'accès HTTP
   access_log: true
 
 features:
-  # Activer l'enregistrement des lancements d'apps dans les logs
   app_launch_logging: true
-  # Activer le mode Dev (désactivable sur prod)
   dev_mode: true
-  # Limiter le mode Dev aux IPs locales uniquement
   dev_mode_local_only: true
 
 native:
-  # Socket Unix pour communication C++ ↔ Rust
   ipc_socket: "/run/mjqbe/native.sock"
-  # Socket Unix pour communication API/native ↔ daemon C
   daemon_socket: "/run/mjqbe/daemon.sock"
 
 system:
-  # Intervalle de polling des stats système (secondes)
   stats_poll_interval: 2
-  # Nombre max de processus affichés dans le mode Dev
   max_processes_displayed: 50

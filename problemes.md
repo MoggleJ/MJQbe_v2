@@ -1,86 +1,59 @@
-# problemes.md — Journal des problèmes
+# Problèmes rencontrés — MJQbe v2
 
-Ce fichier est maintenu par les agents IA. Chaque problème bloquant ou inattendu doit être enregistré ici avec sa solution.
+## P1 — Docker snap : permission denied sur /var/run/docker.sock
 
----
+**Symptôme :** `permission denied while trying to connect to the Docker daemon socket`
 
-## Format
+**Cause :** Avec Docker installé via snap, le socket Docker n'appartient pas au groupe `docker` par défaut après un restart du daemon.
 
-```
-## [SPRINT-XX] Titre du problème
-
-### Problème
-Description précise du problème rencontré.
-
-### Contexte
-Fichier(s) concerné(s), commande lancée, message d'erreur exact.
-
-### Solution
-Ce qui a résolu le problème.
-
-### Statut
-- [ ] En cours
-- [x] Résolu
-```
-
----
-
-<!-- Les agents ajoutent leurs entrées ci-dessous -->
-
-## [SPRINT-01] Accès Docker sans sudo
-
-### Problème
-`docker compose up` échoue avec `permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock`. L'utilisateur `mogglej` n'est pas dans le groupe `docker`.
-
-### Contexte
-Commande : `docker compose -f docker-compose.yml up -d --build`
-Erreur : `unable to get image 'postgres:15-alpine': permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
-
-### Solution
-Docker est installé via **snap** et ne crée pas le groupe `docker` automatiquement.
-
+**Solution :**
 ```bash
-sudo groupadd docker
+sudo groupadd docker 2>/dev/null || true
 sudo usermod -aG docker $USER
 sudo chown root:docker /var/run/docker.sock
-newgrp docker   # active sans déconnexion
-dev up
+newgrp docker
 ```
 
-> Le `chown` du socket peut se perdre au reboot. Relancer `sudo chown root:docker /var/run/docker.sock` si besoin.
+Après un `sudo snap restart docker`, relancer :
+```bash
+sudo chown root:docker /var/run/docker.sock
+```
 
-### Statut
-- [x] Résolu — groupe docker créé, socket rechown, utilisateur ajouté au groupe
+Le script `cli/dev` se ré-exécute automatiquement avec `sg docker` si le socket est inaccessible mais que l'user est dans le groupe docker.
 
----
-
-## [SPRINT-01] npm ci échoue sans package-lock.json
-
-### Problème
-`npm ci` dans le Dockerfile frontend échoue car il n'y a pas de `package-lock.json` au sprint 1.
-
-### Contexte
-Dockerfile frontend, étape `RUN npm ci`. Erreur : exit code 1 avec affichage de l'aide npm.
-
-### Solution
-Remplacer `npm ci` par `npm install` dans le Dockerfile frontend.
-`npm ci` sera réintroduit au sprint 6 quand le lockfile sera généré.
-
-### Statut
-- [x] Résolu
+**Statut :** Résolu (workaround automatique dans cli/dev + chown manuel post-restart)
 
 ---
 
-## [SPRINT-01] Daemon C — headers stdio.h manquants sur Debian slim
+## P2 — Port déjà alloué (Bind failed: port is already allocated)
 
-### Problème
-`gcc` seul sur `debian:bookworm-slim` ne fournit pas les headers de la libc (`stdio.h`, etc.).
+**Symptôme :** `Bind for 0.0.0.0:XXXX failed: port is already allocated` alors que `ss` ne montre rien sur ce port.
 
-### Contexte
-Dockerfile daemon, `RUN make`. Erreur : `fatal error: stdio.h: No such file or directory`.
+**Cause :** Docker (snap) garde des réservations de ports en mémoire quand un conteneur échoue à démarrer (reste en état `Created`). Le daemon ne libère pas le port automatiquement.
 
-### Solution
-Remplacer `gcc` + `make` par `build-essential` dans le Dockerfile daemon.
+**Solution immédiate :**
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
+```
 
-### Statut
-- [x] Résolu
+**Si ça persiste :**
+```bash
+sudo snap restart docker
+sudo chown root:docker /var/run/docker.sock
+```
+
+**Fix préventif appliqué :** `cmd_up` et `cmd_watch` dans `cli/dev` font un `down --remove-orphans` avant chaque démarrage + `--force-recreate` sur le `up`.
+
+**Statut :** Résolu
+
+---
+
+## P3 — daemon build : stdio.h not found
+
+**Symptôme :** `fatal error: stdio.h: No such file or directory` lors du build du daemon.
+
+**Cause :** Image Debian slim sans les headers libc. `gcc` seul ne suffit pas.
+
+**Solution :** Utiliser `build-essential` à la place de `gcc` dans `daemon/Dockerfile`.
+
+**Statut :** Résolu

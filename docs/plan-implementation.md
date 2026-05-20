@@ -139,7 +139,7 @@ Tests passent. `PUT /admin/config` modifie `config.yml`. `POST /admin/services/a
 - [ ] Boutons restart par service + bouton "Reboot tout" (avec modal de confirmation + re-auth)
 
 ### Livrable de vérification
-`dev up` → `http://localhost:8484` → login → mode TV affiche les apps → admin panel accessible → modifier config.yml via l'UI persiste le fichier.
+`dev up` → `http://localhost:4443` → login → mode TV affiche les apps → admin panel accessible → modifier config.yml via l'UI persiste le fichier.
 
 ---
 

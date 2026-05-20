@@ -1,8 +1,5 @@
-# Override de développement — hot-reload pour frontend et API
-# Usage : dev watch   (ou manuellement : docker compose -f docker-compose.yml -f docker-compose.dev.yml up)
-#
-# Frontend : Vite dev server (HMR — mise à jour dans le navigateur en <100ms)
-# API      : uvicorn --reload (restart automatique à chaque modification Python)
+# Override développement — hot-reload frontend et API
+# Usage : dev watch
 
 services:
   frontend:
@@ -10,15 +7,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     volumes:
-      - ./frontend:/app                  # Source montée en live
-      - /app/node_modules                # node_modules isolés dans le conteneur
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "0.0.0.0:4444:5173"             # Vite dev server sur 5173 → exposé sur 4443
+      - "0.0.0.0:4443:5173"
     environment:
       SERVER_NAME: ${SERVER_NAME:-_}
-      VITE_API_URL: ""                   # Vide = proxy Vite vers /api
+      VITE_API_URL: ""
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:5173"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +23,7 @@ services:
 
   api:
     volumes:
-      - ./api:/app                       # Source Python montée en live
+      - ./api:/app
       - ./config:/app/config
       - daemon-socket:/run/mjqbe
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4848", "--reload"]

@@ -17,13 +17,13 @@ def _load_config() -> dict:
 
 _config = _load_config()
 _srv = _config.get("server", {})
-_web_port = _srv.get("web_port", 8484)
+_web_port = _srv.get("web_port", 4443)
 _domain = _srv.get("domain", "") or ""
 _https = _srv.get("https", False)
 
 _allowed_origins = [
     f"http://localhost:{_web_port}",
-    "http://localhost:5173",  # vite dev server
+    "http://localhost:5173",
 ]
 if _domain:
     scheme = "https" if _https else "http"
@@ -47,6 +47,6 @@ def health():
 @app.get("/config/port")
 def config_port():
     return {
-        "web_port": _config.get("server", {}).get("web_port", 8484),
-        "api_port": _config.get("server", {}).get("api_port", 4848),
+        "web_port": _srv.get("web_port", 4443),
+        "api_port": _srv.get("api_port", 4848),
     }

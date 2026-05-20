@@ -1,12 +1,10 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2
-TARGET = mjqbe-daemon
-SRCS = main.c
+CC      = gcc
+CFLAGS  = -Wall -Wextra -O2
+TARGET  = mjqbe-daemon
+SRC     = main.c
 
-$(TARGET): $(SRCS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS)
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) -lcjson
 
 clean:
 	rm -f $(TARGET)
-
-.PHONY: clean
