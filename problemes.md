@@ -50,4 +50,37 @@ dev up
 > Le `chown` du socket peut se perdre au reboot. Relancer `sudo chown root:docker /var/run/docker.sock` si besoin.
 
 ### Statut
-- [ ] En cours (action manuelle requise de l'utilisateur)
+- [x] Résolu — groupe docker créé, socket rechown, utilisateur ajouté au groupe
+
+---
+
+## [SPRINT-01] npm ci échoue sans package-lock.json
+
+### Problème
+`npm ci` dans le Dockerfile frontend échoue car il n'y a pas de `package-lock.json` au sprint 1.
+
+### Contexte
+Dockerfile frontend, étape `RUN npm ci`. Erreur : exit code 1 avec affichage de l'aide npm.
+
+### Solution
+Remplacer `npm ci` par `npm install` dans le Dockerfile frontend.
+`npm ci` sera réintroduit au sprint 6 quand le lockfile sera généré.
+
+### Statut
+- [x] Résolu
+
+---
+
+## [SPRINT-01] Daemon C — headers stdio.h manquants sur Debian slim
+
+### Problème
+`gcc` seul sur `debian:bookworm-slim` ne fournit pas les headers de la libc (`stdio.h`, etc.).
+
+### Contexte
+Dockerfile daemon, `RUN make`. Erreur : `fatal error: stdio.h: No such file or directory`.
+
+### Solution
+Remplacer `gcc` + `make` par `build-essential` dans le Dockerfile daemon.
+
+### Statut
+- [x] Résolu
