@@ -4,4 +4,4 @@
 services:
   frontend:
     ports:
-      - "0.0.0.0:4444:80"
+      - "0.0.0.0:${WEB_PORT:-4444}:80"

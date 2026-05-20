@@ -15,13 +15,16 @@ if ! docker info &>/dev/null 2>&1 && id -nG 2>/dev/null | grep -qw docker; then
     exec sg docker "$0" "$@"
 fi
 
-_read_domain() {
-    local domain
-    domain=$(grep -E '^\s*domain:' "$CONFIG_FILE" 2>/dev/null | awk -F': ' '{print $2}' | tr -d '"' | xargs)
-    echo "${domain:-_}"
+_read_yaml() {
+    local key="$1" default="$2"
+    local val
+    val=$(grep -E "^\s*${key}:" "$CONFIG_FILE" 2>/dev/null | awk -F': ' '{print $2}' | tr -d '"' | xargs)
+    echo "${val:-$default}"
 }
-export SERVER_NAME
-SERVER_NAME="$(_read_domain)"
+export SERVER_NAME WEB_PORT API_PORT
+SERVER_NAME="$(_read_yaml domain _)"
+WEB_PORT="$(_read_yaml web_port 4444)"
+API_PORT="$(_read_yaml api_port 4848)"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -53,7 +56,7 @@ cmd_up() {
     _compose_dev  down --remove-orphans 2>/dev/null || true
     info "Démarrage des services (prod)..."
     _compose_prod --env-file "$ENV_FILE" up -d --build --force-recreate
-    success "Services démarrés → http://localhost:4444"
+    success "Services démarrés → http://localhost:${WEB_PORT}"
 }
 
 cmd_down() {
@@ -69,7 +72,7 @@ cmd_watch() {
     _compose_prod down --remove-orphans 2>/dev/null || true
     _compose_dev  down --remove-orphans 2>/dev/null || true
     info "Démarrage en mode WATCH (hot-reload)..."
-    info "  Frontend : Vite HMR  → http://localhost:4444"
+    info "  Frontend : Vite HMR  → http://localhost:${WEB_PORT}"
     info "  API      : uvicorn --reload"
     info "  Ctrl+C pour arrêter"
     _compose_dev --env-file "$ENV_FILE" up --build --force-recreate

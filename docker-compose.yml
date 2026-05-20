@@ -26,14 +26,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - daemon-socket:/run/mjqbe
     ports:
-      - "4848:4848"
+      - "${API_PORT:-4848}:${API_PORT:-4848}"
     networks:
       - mjqbe-network
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4848/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-4848}/health"]
       interval: 15s
       timeout: 5s
       retries: 3

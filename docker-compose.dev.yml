@@ -10,7 +10,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "0.0.0.0:4444:5173"
+      - "0.0.0.0:${WEB_PORT:-4444}:5173"
     environment:
       SERVER_NAME: ${SERVER_NAME:-_}
       VITE_API_URL: ""
