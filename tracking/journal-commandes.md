@@ -118,3 +118,10 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `01:0x` — E2E : `voice.simulate` (télé→cec, hub→relay, netflix→launch résolu, inexistant→unresolved, set_enabled token + voice_disabled) ; UI smoke OK.
 - `01:0x` — bug : `cec_send` bloque (cec-client sans adaptateur) → `daemon timeout`. Fix : `timeout 6 sh -c` dans `av.c` + timeout DaemonClient 3s→8s. Rebuild daemon → cec ~0,5 s.
 - `01:0x` — nettoyage (daemon standalone, image smoke, db prod).
+
+### Session — Sprint 10 (WEB : authentification) [2026-08-31]
+
+- `01:2x` — api : +`infrastructure/security/{passwords,tokens}.py`, +`infrastructure/db/user_repo.py`, +`infrastructure/oauth/providers.py`, +`application/auth_service.py`, +`interface/deps.py`, +`interface/routes/auth.py` ; `main.py` réécrit (routers + `/dev` derrière `require_admin`). requirements : +pyjwt +httpx +email-validator.
+- `01:2x` — `pip install -r api/requirements-dev.txt` (venv) ; `flake8 app tests` → clean.
+- `01:3x` — `pytest tests/ -q` (db Docker :15432) — 3 échecs : `.test` TLD rejeté par email-validator → emails de test en `@example.com`. Re-run → **15 passed**.
+- `01:3x` — `docker compose up -d --build api` ; live : `POST /auth/login admin/admin` → JWT ; `/auth/me` OK ; `/dev/hardware` sans token → 401, admin → 200 ; register OK ; openapi 6 routes `/auth`.

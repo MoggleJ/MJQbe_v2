@@ -1,27 +1,22 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from alembic.config import Config as AlembicConfig
-from alembic import command as alembic_command
 import os
-import yaml
+from contextlib import asynccontextmanager
 
-from app.infrastructure.db.session import SessionLocal
+from alembic import command as alembic_command
+from alembic.config import Config as AlembicConfig
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.infrastructure.db import seed
-
-
-def _load_config() -> dict:
-    path = os.getenv("CONFIG_PATH", "/app/config/config.yml")
-    try:
-        with open(path) as f:
-            return yaml.safe_load(f) or {}
-    except FileNotFoundError:
-        return {}
+from app.infrastructure.db.session import SessionLocal
+from app.interface.deps import get_config, require_admin
+from app.interface.routes import auth as auth_routes
+from app.interface.routes import dev as dev_routes
 
 
 def _run_migrations() -> None:
-    alembic_cfg = AlembicConfig(os.path.join(os.path.dirname(__file__), "..", "alembic.ini"))
-    alembic_cfg.set_main_option("script_location", os.path.join(os.path.dirname(__file__), "..", "alembic"))
+    here = os.path.dirname(__file__)
+    alembic_cfg = AlembicConfig(os.path.join(here, "..", "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", os.path.join(here, "..", "alembic"))
     alembic_command.upgrade(alembic_cfg, "head")
 
 
@@ -40,26 +35,18 @@ async def lifespan(app: FastAPI):
     yield
 
 
-_config  = _load_config()
-_srv     = _config.get("server", {})
+_config = get_config()
+_srv = _config.get("server", {})
 _web_port = _srv.get("web_port", 4444)
-_domain  = _srv.get("domain", "") or ""
-_https   = _srv.get("https", False)
+_domain = _srv.get("domain", "") or ""
+_https = _srv.get("https", False)
 
-_allowed_origins = [
-    f"http://localhost:{_web_port}",
-    "http://localhost:5173",
-]
+_allowed_origins = [f"http://localhost:{_web_port}", "http://localhost:5173"]
 if _domain:
     scheme = "https" if _https else "http"
-    _allowed_origins.append(f"{scheme}://{_domain}")
-    _allowed_origins.append(f"{scheme}://{_domain}:{_web_port}")
+    _allowed_origins += [f"{scheme}://{_domain}", f"{scheme}://{_domain}:{_web_port}"]
 
 app = FastAPI(title="MJQbe API", version="2.0.0", lifespan=lifespan)
-
-from app.interface.routes import dev as dev_routes  # noqa: E402
-
-app.include_router(dev_routes.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,6 +55,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_routes.router)
+# /dev/* is admin-only (Sprint 10).
+app.include_router(dev_routes.router, dependencies=[Depends(require_admin)])
 
 
 @app.get("/health")

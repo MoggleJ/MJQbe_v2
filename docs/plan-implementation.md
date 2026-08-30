@@ -194,24 +194,25 @@ Sur Pi : dire "OK hub allume la TV" → TV s'allume.
 
 ---
 
-## Sprint 10 — Authentification [WEB]
+## Sprint 10 — Authentification [WEB] ✓
 
 **Objectif :** Système d'auth complet (local + OAuth) avec protection des routes.
 
 ### Tâches
-- [ ] Implémenter les entités `User` et le repository dans la couche domain/infrastructure
-- [ ] Implémenter l'endpoint `POST /auth/login` (username + password, bcrypt, retourne JWT)
-- [ ] Implémenter `POST /auth/register` (création de compte local)
-- [ ] Implémenter le refresh token (`POST /auth/refresh`)
-- [ ] Implémenter le middleware JWT (vérification sur toutes les routes protégées)
-- [ ] Implémenter OAuth Google : `GET /auth/oauth/google` + callback
-- [ ] Implémenter OAuth GitHub : `GET /auth/oauth/github` + callback
-- [ ] Implémenter la gestion des rôles (`user` / `admin`)
-- [ ] Protéger les routes admin (`/admin/*`, `/dev/*`)
-- [ ] Écrire les tests d'intégration pour login, register, OAuth callback, JWT validation
+- [x] `UserRepository` (`infrastructure/db/user_repo.py`) — get/by_username/by_email/by_oauth/create/touch_last_login/list_all
+- [x] `POST /auth/login` — bcrypt (`security/passwords.py`) → paire de tokens JWT HS256 (`security/tokens.py`)
+- [x] `POST /auth/register` — compte local (username ≥ 3, password ≥ 8, unicité)
+- [x] `POST /auth/refresh` — token `type:refresh` → nouveau `access` (rejette un access token)
+- [x] Middleware JWT — `deps.get_current_user` (`HTTPBearer`, `decode_token`), `GET /auth/me`
+- [x] OAuth Google — `GET /auth/oauth/google` → redirect ; `/callback` → échange code + userinfo
+- [x] OAuth GitHub — idem (`api.github.com/user` + `/user/emails`)
+- [x] Rôles `user`/`admin` — `deps.require_admin`
+- [x] Protéger `/dev/*` — `include_router(dev, dependencies=[Depends(require_admin)])` ; `/admin/*` : routes créées + protégées au Sprint 12 (#67)
+- [x] Tests d'intégration — `tests/test_auth.py` : register/login/me/refresh/guards/OAuth (11 tests)
 
 ### Livrable de vérification
 Tests passent. `POST /auth/login` avec credentials valides retourne un JWT. Route protégée sans JWT retourne 401.
+**Statut :** **15 tests api** verts (4 santé/seed + 11 auth), flake8 clean. Live : `POST /auth/login admin/admin` → JWT ; `GET /dev/hardware` sans token → **401**, avec token admin → **200** ; user non-admin → **403** ; `oauth/github` configuré → redirect vers github. Flux OAuth réel (avec vrais client id/secret) : non testé — creds absents. Voir `tracking/sprint-10.md`.
 
 ---
 

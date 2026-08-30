@@ -184,3 +184,18 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 9 | tâches `[x]`/`[~]`, bloc statut | sprint terminé (capture audio différée) |
+
+---
+
+## 2026-08-31 — Sprint 10 (authentification WEB)
+
+### ~01:20 CEST — API : couche auth complète
+- **Type** : nouvelle surface HTTP (`/auth/*`) + **protection** de `/dev/*`.
+- **Fichiers** : +`api/app/infrastructure/security/{__init__,passwords,tokens}.py`, +`api/app/infrastructure/db/user_repo.py`, +`api/app/infrastructure/oauth/{__init__,providers}.py`, +`api/app/application/auth_service.py`, +`api/app/interface/{deps,routes/auth}.py`, +`api/tests/test_auth.py` ; modifiés : `api/app/main.py` (réécrit), `api/requirements.txt` (+pyjwt, +httpx, +email-validator), `api/requirements-dev.txt`.
+- **Sécurité** : `SECRET_KEY` (env) pour signer les JWT ; client id/secret OAuth **uniquement** via env (`GOOGLE_/GITHUB_CLIENT_ID/SECRET`) — jamais dans `config.yml`. `/dev/*` désormais **admin-only** (#67 partiel : `/admin/*` au Sprint 12).
+- **Impact machine** : image `api` reconstruite + conteneur recréé (stack `dev` healthy). Nouveaux users possibles via `POST /auth/register` (base `mjqbe`).
+
+### Fichiers hors api
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 10 | 10 tâches `[x]`, bloc statut | sprint terminé |

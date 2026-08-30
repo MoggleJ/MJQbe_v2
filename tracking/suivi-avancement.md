@@ -112,3 +112,11 @@ Chaque entrée est horodatée.
 - **Différé** : capture audio Vosk réelle (libvosk+cpal+ISD1820/micro) + LaunchApp qui n'ouvre rien → nouvelles issues ; test voix réel sur Pi (#137).
 - **Issues fermées** : #54 #55 #56 #58 ; #53 + #57 rescopées → nouvelle issue.
 - **Prochaine étape** : commit `sprint-09:`, push + branche, issues, puis **Sprint 10 (WEB — authentification JWT + OAuth)**.
+
+### 2026-08-31 01:40 CEST — Sprint 10 : authentification WEB
+- **Fait** : bcrypt + JWT HS256 (access/refresh), UserRepository, AuthService (register/login/refresh/oauth_upsert), OAuth Google+GitHub (providers + routes + state), deps FastAPI (get_current_user 401 / require_admin 403), `/dev/*` protégé.
+- **Tests** : 15 api verts (11 auth), flake8 clean ; live : login→JWT, /dev sans token→401 / admin→200 / user→403, oauth/github→redirect.
+- **Erreurs** : email-validator refuse `.test` → emails de test en `.com` (1 fix).
+- **Différé** : `/admin/*` (routes au Sprint 12, #67) ; flux OAuth réseau réel (pas de client id/secret) ; révocation refresh (Sprint 17).
+- **Issues fermées** : #59 #60 #61 #62 #63 #64 #65 #66 #68. #67 reste (dépend du Sprint 12).
+- **Prochaine étape** : commit `sprint-10:`, push + branche, issues, puis **Sprint 11 (API apps & catégories CRUD)**.
