@@ -1,6 +1,14 @@
+import os
+
 import bcrypt
 from sqlalchemy.orm import Session
 from app.domain.entities import User, Category, App, Settings
+
+
+def _bootstrap_admin_password() -> str:
+    """Initial admin password — set MJQBE_ADMIN_PASSWORD in production. The
+    fallback is a placeholder to be changed on first login (docs/deploiement.md)."""
+    return os.getenv("MJQBE_ADMIN_PASSWORD") or "admin"
 
 
 # ---------------------------------------------------------------------------
@@ -68,7 +76,7 @@ def run(db: Session) -> None:
         ))
 
     # Utilisateur admin
-    pw_hash = bcrypt.hashpw(b"admin", bcrypt.gensalt()).decode()
+    pw_hash = bcrypt.hashpw(_bootstrap_admin_password().encode(), bcrypt.gensalt()).decode()
     admin = User(
         username="admin",
         email="admin@mjqbe.local",

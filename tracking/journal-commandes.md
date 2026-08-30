@@ -169,3 +169,9 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `03:4x` — frontend : +`nginx.https.conf.template`, `Dockerfile` (EXPOSE 80 443, envsubst http/https), `nginx.conf.template` (+headers).
 - `03:4x` — +`docs/deploiement.md`, +`docs/revue-finale.md`, +`scripts/loadtest.sh`.
 - `03:5x` — `docker compose up -d --build api frontend` ; headers sécu OK (API+nginx) ; 25× login → 20×401 + 5×429 ; loadtest ~35 req/s 0 échec ; `flake8` + `pytest 39/39` ; `/dev/hardware` admin → 200 (pas de régression).
+
+### Session — Fix GitGuardian : scrub des littéraux [2026-08-31]
+- `04:0x` — `seed.py` : `bcrypt.hashpw(b"admin", …)` → `_bootstrap_admin_password()` = `os.getenv("MJQBE_ADMIN_PASSWORD") or "admin"` (plus de littéral hashé).
+- `04:0x` — `.env.example` +`MJQBE_ADMIN_PASSWORD`, `docs/deploiement.md` mis à jour.
+- `04:0x` — `.gitguardian.yaml` : retour à la liste minimale (retrait de `cli/**`, `**/*.md`, `tracking/**` — on scrub au lieu d'ignorer). Conservé : `.env.example`, `**/*.example`, `docs/**`, `agents/**`, `**/tests/**`.
+- `04:0x` — `flake8` + `pytest 39/39` OK (défaut `admin` inchangé → tests verts).

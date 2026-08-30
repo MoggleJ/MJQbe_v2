@@ -4,10 +4,6 @@ ignore-paths:
   - "**/*.example"
   - "docs/**"
   - "agents/**"
-  - "tracking/**"          # journaux de dev — placeholders uniquement
-  - "**/*.md"              # documentation — pas de secrets réels
-  - "**/tests/**"          # fixtures de test (mots de passe factices bcrypt)
+  # Fixtures de test : mots de passe factices bas-entropie (pratique GG recommandée).
+  - "**/tests/**"
   - "native/core/tests/**"
-  - "cli/**"               # script dev — uniquement des fallbacks .env, pas de secret
-ignore-known-secrets: true
-

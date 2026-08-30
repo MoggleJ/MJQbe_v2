@@ -270,3 +270,10 @@ Chaque entrée est horodatée.
 - **GitGuardian** : `cli/dev` — suppression de l'URL `postgres://…:${POSTGRES_PASSWORD:-mjqbe}@…` (fallback en clair) → passage de `POSTGRES_HOST`/`PORT` ; `.gitguardian.yaml` +`cli/**`.
 - **Impact machine** : images `api` + `frontend` reconstruites/recréées. `backups/` gitignoré, non commité.
 - `docs/plan-implementation.md` Sprint 17 → `[x]` + statut. **Plan 100 % coché** (17/17).
+
+---
+## 2026-08-31 — Fix GitGuardian (scrub des littéraux)
+- `api/app/infrastructure/db/seed.py` : mot de passe admin du seed = `MJQBE_ADMIN_PASSWORD` (env), fallback `"admin"` — suppression de `bcrypt.hashpw(b"admin", …)`.
+- `.env.example` : +`MJQBE_ADMIN_PASSWORD=<initial-admin-password>`.
+- `.gitguardian.yaml` : liste d'ignore ramenée au minimum (retrait de `cli/**`, `**/*.md`, `tracking/**` ajoutés plus tôt) — on préfère scrubber les valeurs.
+- Aucune régression (défaut `admin` conservé, 39 tests api verts).

@@ -28,8 +28,9 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profil
 git clone https://github.com/MoggleJ/MJQbe_v2.git && cd MJQbe_v2
 cp .env.example .env
 #  éditer .env :
-#   POSTGRES_PASSWORD = openssl rand -hex 16
-#   SECRET_KEY        = openssl rand -hex 32
+#   POSTGRES_PASSWORD    = openssl rand -hex 16
+#   SECRET_KEY           = openssl rand -hex 32
+#   MJQBE_ADMIN_PASSWORD = mot de passe admin initial (sinon "admin")
 #   GOOGLE_/GITHUB_CLIENT_ID/SECRET si OAuth
 #  éditer config/config.yml : server.domain, server.https, ports
 
@@ -39,7 +40,7 @@ dev health              # doit être tout ✓
 ```
 
 - Web : `http://<pi>:4444` (ou `server.web_port`).
-- Compte admin initial : `admin` / `admin` — **le changer immédiatement** via l'UI (ou SQL).
+- Compte admin initial : `admin` / `$MJQBE_ADMIN_PASSWORD` (défaut `admin`) — **le changer immédiatement** via l'UI si le défaut a été utilisé.
 
 ### HTTPS
 
