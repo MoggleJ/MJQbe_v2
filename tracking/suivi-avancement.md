@@ -134,3 +134,11 @@ Chaque entrée est horodatée.
 - **Décision** : `docker-compose.yml` — `./config` + docker.sock passés en **rw** (nécessaire admin panel ; sécu à revoir S17, proxy socket).
 - **Issues fermées** : #79–#92 + **#67** (`/admin/*` protégé).
 - **Prochaine étape** : commit `sprint-12:`, push + branche, issues, puis **Sprint 13 (Frontend React — layout + mode TV + admin panel)** — le plus gros du web.
+
+### 2026-08-31 03:05 CEST — Sprint 13 : Frontend React + TS
+- **Fait** : SPA complète — client API (refresh auto 401), AuthContext + UiContext (10 thèmes CSS vars, settings sync), Sidebar/AppCard/AppGrid/Modal, pages Home/AllApps/Search/Settings/Login/Admin (users+catalogue CRUD+logs+système config/services/reboot), routing + garde admin, responsive, vitest.
+- **Tests** : `tsc && vite build` OK (51 modules) ; vitest 2/2 (Docker) ; live : SPA sur :4444, proxy `/api` OK, deep-link OK.
+- **Contrainte** : `npm install` hôte impossible (node_modules root-owned) → tout via Docker (conforme consigne).
+- **Différé** : parcours navigateur cliqué ; page callback OAuth front ; prévisu thèmes (S15).
+- **Issues fermées** : #93–#107 + **#1, #4–#41** (tâches détaillées Sprints 3–7 restées ouvertes). #2 gardée (vérif Pi ARM).
+- **Prochaine étape** : commit `sprint-13:`, push + branche, issues, puis **Sprint 14 (mode Desktop + favoris + recherche front)**.

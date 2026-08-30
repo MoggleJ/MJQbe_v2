@@ -261,30 +261,31 @@ Tests passent. `PUT /admin/config` modifie `config.yml`. `POST /admin/services/a
 **Statut :** **36 tests api** verts, flake8 clean. Live : settings auto-créés (theme `dark`) + `PUT` → `light-blue` ; favoris `[4]` ; `GET /apps/{id}` user → log `app_launch` visible dans `/admin/logs` ; `/admin/users` → 27 ; **`/admin/services` liste les 4 conteneurs via le socket Docker** ; `/admin/config` → `web_port 4444`. Guards : non-admin → 403, sans token → 401. `docker-compose.yml` : mount `./config` passé en **rw** + socket Docker (retrait `:ro`). Voir `tracking/sprint-12.md`.
 ---
 
-## Sprint 13 — Frontend Web — Layout, Mode TV & Admin Panel [WEB]
+## Sprint 13 — Frontend Web — Layout, Mode TV & Admin Panel [WEB] ✓
 
 **Objectif :** Shell React fonctionnel avec sidebar et mode TV complet.
 
 ### Tâches
-- [ ] Initialiser le projet React 18 + Vite
-- [ ] Configurer Nginx pour servir le build et proxifier `/api` → `api:4848`
-- [ ] Implémenter le système de thèmes (10 thèmes CSS via variables)
-- [ ] Créer le composant `Sidebar` (titre dynamique, menu, heure temps réel, settings)
-- [ ] Créer le layout principal (sidebar fixe + contenu)
-- [ ] Implémenter les pages : `Home`, `AllApps`, `Search`
-- [ ] Implémenter le mode TV : grille d'apps larges, catégories visibles
-- [ ] Créer le composant `AppCard` (icône + nom)
-- [ ] Connecter les appels API (service `apps`, `categories`)
-- [ ] Implémenter la page de login (formulaire + OAuth buttons)
-- [ ] Gérer le JWT côté client (stockage, refresh automatique)
-- [ ] Responsive : TV (1920px), desktop (1280px), tablette (768px), mobile (375px)
-- [ ] Page `Admin` : liste des users, gestion apps/catégories
-- [ ] Page `Admin > Système` : affichage config.yml éditable (formulaire), état des services Docker
-- [ ] Boutons restart par service + bouton "Reboot tout" (avec modal de confirmation + re-auth)
+- [x] React 18 + Vite + **TypeScript** (tsconfig strict, `tsc && vite build`)
+- [x] Nginx : sert le build + proxy `/api/` → `api:4848/` (déjà dans `nginx.conf.template`) ; `frontend/.dockerignore` ajouté
+- [x] 10 thèmes en **variables CSS** (`theme/themes.ts` → `applyTheme` sur `:root`), `UiContext`
+- [x] `Sidebar` : titre dynamique (MJ TV/Desktop), menu, switch de mode, `Clock` temps réel, Paramètres, connexion/déconnexion
+- [x] Layout `.layout` (sidebar fixe 250px + `.content`)
+- [x] Pages `Home` / `AllApps` / `Search` — React Router (`BrowserRouter`)
+- [x] Mode TV : `.grid.tv` (colonnes larges), chips catégories
+- [x] `AppCard` (icône lettre + nom tronqué + étoile favori)
+- [x] Service API `src/api/{client,endpoints}.ts` (fetch, base `/api`)
+- [x] Page `Login` : formulaire login/register + boutons OAuth (Google/GitHub)
+- [x] JWT client : `localStorage` + **refresh automatique transparent** sur 401 (`client.ts`)
+- [x] Responsive : media queries 900 / 640 px (sidebar horizontale en mobile)
+- [x] Page `Admin` (onglets) : users, catalogue (CRUD apps/catégories), logs
+- [x] `Admin > Système` : `config.yml` éditable (textarea JSON), état services Docker, restart/stop
+- [x] Modal de confirmation reboot + re-auth (`Modal` + mot de passe)
+- [x] Vitest : `src/test/basic.test.tsx` (thèmes + AppCard) — `npm run test` vert
 
 ### Livrable de vérification
 `dev up` → `http://localhost:4444` → login → mode TV affiche les apps → admin panel accessible → modifier config.yml via l'UI persiste le fichier.
-
+**Statut :** `tsc && vite build` OK (51 modules) ; **vitest 2/2** (dans Docker) ; **live** : SPA servie sur `:4444` avec assets buildés, `/api/health` et `/api/apps?mode=tv` proxifiés OK, deep-link `/admin` → 200 (fallback nginx). Parcours navigateur (clic login → grille → admin) non cliqué mais toutes les API sous-jacentes sont vérifiées live (Sprints 10-12). Voir `tracking/sprint-13.md`.
 ---
 
 ## Sprint 14 — Frontend Web — Mode Desktop [WEB]

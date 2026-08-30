@@ -140,3 +140,12 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `02:1x` — `flake8 app tests` clean ; `pytest` → **36 passed** (config testé sur fichier tmp via `monkeypatch CONFIG_PATH`).
 - `02:1x` — `docker compose up -d --build api` ; live : settings auto-créés + PUT, favoris, `GET /apps/{id}`→log, `/admin/logs`/`users`/`services`(4 conteneurs via socket)/`config`. Guards 401/403 OK.
 - `02:2x` — db restauré prod.
+
+### Session — Sprint 13 (Frontend React + TS) [2026-08-31]
+
+- `02:5x` — frontend : réécriture complète en React 18 + Vite + TS. +`package.json` (router/vitest/testing-library), `tsconfig.json`, `vite.config.ts`, `src/{api,auth,theme,components,pages,test}/*` (~25 fichiers), `styles.css`, `.dockerignore`.
+- `03:0x` — `npm install` sur l'hôte → **échec** (node_modules root-owned/vide, pas de sudo). → build/test **via Docker**.
+- `03:0x` — `docker build ./frontend` — `tsc && vite build` OK (51 modules). `frontend/.dockerignore` ajouté (le COPY recopiait le node_modules vide de l'hôte).
+- `03:0x` — `docker build ./frontend --target builder` + `docker run ... npx vitest run` — **2/2 tests**.
+- `03:0x` — `docker compose up -d --build frontend` ; `curl :4444/` (SPA + assets), `/api/health` + `/api/apps?mode=tv` (proxy nginx OK), `/admin` deep-link → 200.
+- `03:0x` — nettoyage images ; db prod.

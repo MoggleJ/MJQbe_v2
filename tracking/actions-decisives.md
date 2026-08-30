@@ -229,3 +229,18 @@ Chaque entrée est horodatée.
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 12 | 16 tâches `[x]`, bloc statut | sprint terminé |
 | `docker-compose.yml` (l.24-27) | `./config` + docker.sock → rw | admin panel (config write + services) |
+
+---
+
+## 2026-08-31 — Sprint 13 (Frontend React + TS)
+
+### ~02:50 CEST — `frontend/` : réécriture React 18 + Vite + TypeScript
+- **Type** : remplacement complet du stub `main.jsx` par une SPA (~25 fichiers `src/`).
+- **Fichiers clés** : `src/api/client.ts` (refresh JWT auto), `src/auth/AuthContext.tsx`, `src/theme/{themes,UiContext}.tsx`, `src/pages/*`, `src/App.tsx`, `styles.css`, `package.json`/`tsconfig.json`/`vite.config.ts`, `frontend/.dockerignore` (nouveau).
+- **Build/test** : impossible sur l'hôte (`node_modules` appartient à root, pas de sudo) → **tout via Docker** (`docker build ./frontend`, `docker run --target builder npx vitest run`).
+- **Impact machine** : image `frontend` reconstruite + conteneur recréé (nginx sert la SPA + proxifie `/api`).
+
+### Fichiers hors frontend
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 13 | 17 tâches `[x]`, bloc statut | sprint terminé |
