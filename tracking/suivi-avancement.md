@@ -96,3 +96,11 @@ Chaque entrée est horodatée.
 - **Différé** : GPIO réel sur Pi (#137) ; protection `/dev/*` → Sprint 10 (#67).
 - **Issues fermées** : #42 #43 #44 #45 #46.
 - **Prochaine étape** : commit `sprint-07:`, push + branche, fermer issues, puis Sprint 8 (daemon AV : IR/CEC/BT).
+
+### 2026-08-31 00:45 CEST — Sprint 8 : daemon AV (IR/CEC/BT)
+- **Fait** : daemon `av.c` (CEC via cec-client, threads IR LIRC + BT UART, ir-map.json, dispatch_action, inject hooks), 5 cmds daemon ; clients Rust/Python `av_status`/`av_cec` ; IPC `av.send` (token) ; `POST/GET /dev/av` ; boutons AV + statut dans Dev.qml.
+- **Tests** (Docker stub) : daemon OK (ir_inject/bt_inject/mapping), API OK (422 sur invalide), Rust core→daemon OK, 40 tests core, UI smoke OK.
+- **Choix** : CEC via `cec-client` (sous-proc) et non libCEC (linkage) — évite une grosse dép de build.
+- **Différé** : IR/CEC/BT réels sur Pi (#137) ; `nav_*` non câblés à une cible UI.
+- **Issues fermées** : #47 #48 #49 #50 #51 #52.
+- **Prochaine étape** : commit `sprint-08:`, push + branche, fermer issues, puis Sprint 9 (reconnaissance vocale).

@@ -143,3 +143,23 @@ Chaque entrée est horodatée.
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 7 | 8 tâches `[x]`, bloc statut | sprint terminé |
 | `cli/dev` | +`cmd_gpio`, +`cmd_relay`, dispatch, help | tâche CLI |
+
+---
+
+## 2026-08-31 — Sprint 8 (daemon AV)
+
+### ~00:35 CEST — `daemon` : sous-système AV
+- **Type** : nouvelles **capacités matérielles** — le daemon exécute `cec-client` (sous-processus) et ouvre le socket LIRC + un device série (`/dev/serial0`).
+- **Fichiers** : +`daemon/av.{c,h}`, +`daemon/ir-map.json` ; `daemon/main.c` (extraction `daemon_relay_set`, +5 cmds, `av_init`), `daemon/Makefile` (+av.c, `-lpthread`), `daemon/Dockerfile` (+`cec-utils`, `COPY ir-map.json` → `/etc/mjqbe/`).
+- **Threads** : 2 pthreads détachés (IR, BT) démarrés à `av_init()` ; se terminent proprement si le device est absent.
+- **Impact machine** : image `daemon` reconstruite (+`cec-utils` ~ paquets CEC) ; conteneurs `daemon`+`api` recréés.
+
+### ~00:40 CEST — core + api + ui : surface AV
+- **core** : IPC `av.send` **token de ré-auth** ; `av.status` ouvert.
+- **api** : `GET/POST /dev/av` (non authentifié jusqu'au Sprint 10, #67).
+- **ui** : `Dev.qml` boutons AV (ré-auth par action).
+
+### Fichiers hors daemon/core/api/ui
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 8 | 7 tâches `[x]`, bloc statut | sprint terminé |

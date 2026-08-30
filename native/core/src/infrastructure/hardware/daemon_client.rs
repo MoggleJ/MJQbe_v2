@@ -93,4 +93,12 @@ impl DaemonClient {
         self.request("led_set", json!({ "r": r, "g": g, "b": b }))
             .await
     }
+
+    pub async fn cec_send(&self, action: &str) -> Result<Value, CoreError> {
+        self.request("cec_send", json!({ "action": action })).await
+    }
+
+    pub async fn av_status(&self) -> Result<Value, CoreError> {
+        self.request("av_status", json!({})).await
+    }
 }

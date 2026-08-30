@@ -98,3 +98,14 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `00:1x` — tests API : `/dev/hardware`, `POST /dev/gpio|relay|led` (+ header JSON), 422 sur valeurs invalides ; `dev gpio 17 1`, `dev relay 3 0` — OK.
 - `00:1x` — E2E Rust core → daemon (stub) : `hardware.info`, `gpio.set` (token), `gpio.get`, `relay.set` — OK.
 - `00:2x` — nettoyage (daemon standalone supprimé, db restaurée prod).
+
+### Session — Sprint 8 (daemon AV : IR/CEC/BT) [2026-08-31]
+
+- `00:3x` — +`daemon/av.{c,h}` (CEC via cec-client, threads LIRC + UART, dispatch), +`daemon/ir-map.json` ; `main.c` : extraction `daemon_relay_set`, +5 cmds, `av_init()` ; Makefile +av.c +pthread ; Dockerfile +cec-utils +COPY ir-map.json.
+- `00:3x` — `docker build ./daemon` — OK 0 warning ; smoke : av_status/ir_map/cec_send/ir_inject/bt_inject OK (stub).
+- `00:3x` — core : `DaemonClient::{cec_send,av_status}`, `HardwareService::{av_cec,av_status}`, IPC `av.status`/`av.send`. `cargo test` → 40 OK, clippy clean.
+- `00:3x` — api : `daemon_client.{av_status,av_cec}`, routes `GET/POST /dev/av`. `flake8` OK.
+- `00:3x` — UI : `NativeBridge` +avStatus/avSend, `Dev.qml` +boutons AV + statut. `cmake --build` OK.
+- `00:4x` — `docker compose build daemon api && up -d` ; `GET /dev/av` `{cec:true,ir:false,bt:false}` ; `POST /dev/av tv_on` → `cec-client failed` (pas d'adaptateur) ; `explode` → 422.
+- `00:4x` — E2E Rust core → daemon : `av.status`, `av.send` (token) OK ; UI smoke Docker → QML OK.
+- `00:4x` — nettoyage (daemon standalone, image smoke, db prod).

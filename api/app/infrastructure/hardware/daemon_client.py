@@ -70,3 +70,16 @@ def relay_set(relay: int, state: int) -> dict:
 
 def led_set(r: int, g: int, b: int) -> dict:
     return _request("led_set", r=int(r), g=int(g), b=int(b))
+
+
+_AV_ACTIONS = {"tv_on", "tv_off", "tv_toggle", "ps4_on", "ps4_off"}
+
+
+def av_status() -> dict:
+    return _request("av_status")
+
+
+def av_cec(action: str) -> dict:
+    if action not in _AV_ACTIONS:
+        raise DaemonError(f"invalid AV action: {action}")
+    return _request("cec_send", action=action)

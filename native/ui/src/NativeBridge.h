@@ -54,6 +54,8 @@ public:
     Q_INVOKABLE void listContainers();
     Q_INVOKABLE void dockerStart(const QString &token, const QString &id);
     Q_INVOKABLE void dockerStop(const QString &token, const QString &id);
+    Q_INVOKABLE void avStatus();
+    Q_INVOKABLE void avSend(const QString &token, const QString &action);
 
 signals:
     void connectedChanged();
@@ -73,6 +75,7 @@ signals:
     void processesReceived(const QVariantList &processes);
     void containersReceived(const QVariantList &containers);
     void devActionResult(const QString &action, bool ok, const QString &error);
+    void avStatusReceived(const QVariantMap &status);
 
 private slots:
     void onConnected();

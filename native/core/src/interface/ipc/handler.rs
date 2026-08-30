@@ -139,6 +139,12 @@ struct LedSetParams {
     b: u8,
 }
 
+#[derive(Deserialize)]
+struct AvSendParams {
+    token: String,
+    action: String,
+}
+
 impl Handler {
     pub fn new(services: Services, platform: Platform) -> Self {
         Self {
@@ -300,6 +306,14 @@ impl Handler {
                 Ok(to_value(self.hardware.led_set(p.r, p.g, p.b).await?))
             }
 
+            "av.status" => Ok(to_value(self.hardware.av_status().await?)),
+
+            "av.send" => {
+                let p: AvSendParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                Ok(to_value(self.hardware.av_cec(&p.action).await?))
+            }
+
             other => Err(CoreError::Internal(format!("unknown method: {other}"))),
         }
     }
@@ -410,6 +424,7 @@ mod tests {
                 json!({ "token": "bogus", "relay": 1, "state": true }),
             ),
             ("led.set", json!({ "token": "bogus", "r": 1 })),
+            ("av.send", json!({ "token": "bogus", "action": "tv_on" })),
         ] {
             assert_eq!(call(m, p).await["error"]["code"], "reauth_required", "{m}");
         }

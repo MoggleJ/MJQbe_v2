@@ -13,6 +13,8 @@
  *
  * Sprint 7: gpio_set, gpio_get, relay_set, led_set, ping, info.
  */
+#include "av.h"
+
 #include <cjson/cJSON.h>
 #include <ctype.h>
 #include <errno.h>
@@ -118,6 +120,13 @@ static int json_int(const cJSON *o, const char *key, int fallback) {
 
 static int valid_pin(int pin) { return pin >= 0 && pin <= 53; }
 
+/* Relay helper, also called from av.c (IR/BT "hub_on" actions). */
+int daemon_relay_set(int relay, int state) {
+    if (relay < 1 || relay > RELAY_COUNT) return -1;
+    int level = g_relay_active_low ? !state : state;
+    return gpio_write(RELAY_PINS[relay], level);
+}
+
 /*
  * Real GPIO only when we can be confident we're on a Pi:
  *   - MJQBE_GPIO_STUB=1        -> always stub
@@ -195,13 +204,11 @@ static cJSON *handle(const cJSON *req) {
         int state = json_int(req, "state", -1);
         if (relay < 1 || relay > RELAY_COUNT || (state != 0 && state != 1))
             return err(id, "bad relay/state");
-        int pin = RELAY_PINS[relay];
-        int level = g_relay_active_low ? !state : state;
-        if (gpio_write(pin, level) != 0) return err(id, strerror(errno));
+        if (daemon_relay_set(relay, state) != 0) return err(id, strerror(errno));
         cJSON *d = cJSON_CreateObject();
         cJSON_AddNumberToObject(d, "relay", relay);
         cJSON_AddNumberToObject(d, "state", state);
-        cJSON_AddNumberToObject(d, "pin", pin);
+        cJSON_AddNumberToObject(d, "pin", RELAY_PINS[relay]);
         return ok_data(id, d);
     }
 
@@ -219,6 +226,29 @@ static cJSON *handle(const cJSON *req) {
         cJSON_AddNumberToObject(d, "g", g > 0);
         cJSON_AddNumberToObject(d, "b", b > 0);
         return ok_data(id, d);
+    }
+
+    /* ---- AV: HDMI-CEC / IR / Bluetooth (Sprint 8) ---- */
+
+    if (strcmp(cmd, "cec_send") == 0) {
+        const cJSON *a = cJSON_GetObjectItemCaseSensitive(req, "action");
+        if (!cJSON_IsString(a)) return err(id, "missing action");
+        return ok_data(id, av_cec(a->valuestring));
+    }
+
+    if (strcmp(cmd, "av_status") == 0) return ok_data(id, av_status());
+    if (strcmp(cmd, "ir_map") == 0) return ok_data(id, av_ir_map());
+
+    if (strcmp(cmd, "ir_inject") == 0) {
+        const cJSON *n = cJSON_GetObjectItemCaseSensitive(req, "name");
+        if (!cJSON_IsString(n)) return err(id, "missing name");
+        return ok_data(id, av_inject_ir(n->valuestring));
+    }
+
+    if (strcmp(cmd, "bt_inject") == 0) {
+        const cJSON *l = cJSON_GetObjectItemCaseSensitive(req, "line");
+        if (!cJSON_IsString(l)) return err(id, "missing line");
+        return ok_data(id, av_inject_bt(l->valuestring));
     }
 
     return err(id, "unknown cmd");
@@ -290,6 +320,8 @@ int main(void) {
     }
     chmod(g_sock_path, 0660);
     if (listen(g_server_fd, 8) < 0) { perror("listen"); return 1; }
+
+    av_init();
 
     printf("[daemon] listening on %s (%s mode)\n", g_sock_path, g_stub ? "stub" : "sysfs");
     fflush(stdout);

@@ -1,0 +1,12 @@
+{
+  "KEY_POWER": "hub_on",
+  "KEY_HOME": "nav_home",
+  "KEY_UP": "nav_up",
+  "KEY_DOWN": "nav_down",
+  "KEY_LEFT": "nav_left",
+  "KEY_RIGHT": "nav_right",
+  "KEY_OK": "nav_ok",
+  "KEY_BACK": "nav_back",
+  "KEY_VOLUMEUP": "tv_on",
+  "KEY_VOLUMEDOWN": "tv_off"
+}

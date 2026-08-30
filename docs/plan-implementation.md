@@ -154,20 +154,22 @@ Sur Pi : `dev gpio 23 1` allume le relais 1.
 
 ---
 
-## Sprint 8 — Daemon C — AV (IR + CEC + Bluetooth) [NATIVE]
+## Sprint 8 — Daemon C — AV (IR + CEC + Bluetooth) [NATIVE] ✓
 
 **Objectif :** Contrôle TV, PS4 et télécommande IR.
 
 ### Tâches
-- [ ] Implémenter réception IR (LIRC ou lecture directe GPIO18)
-- [ ] Mapper les codes IR aux actions (allumage hub, navigation)
-- [ ] Implémenter HDMI CEC via libCEC : `tv_on`, `tv_off`, `ps4_on`, `ps4_off`
-- [ ] Implémenter communication HC-05 (UART, parse commandes BT)
-- [ ] Boutons de contrôle AV dans le mode Dev natif
-- [ ] Endpoints API web : `POST /dev/av`
+- [x] Réception IR — `daemon/av.c` thread écoutant le socket LIRC (`LIRC_SOCKET`), `sscanf` code/repeat/button
+- [x] Mapper les codes IR → actions — `daemon/ir-map.json` (`KEY_POWER→hub_on`, nav…) + fallback intégré ; `dispatch_action` (cec / relais / nav)
+- [x] HDMI CEC — via **`cec-client`** (paquet `cec-utils`, pas de linkage libCEC) : `tv_on/tv_off/tv_toggle/ps4_on/ps4_off`
+- [x] HC-05 — thread UART (`BT_SERIAL`, 9600 8N1), lignes `TV_ON`/`HUB_ON`/… → mêmes actions
+- [x] Boutons AV dans `Dev.qml` (Allume/Éteins TV, PS4 on/off) + statut `cec/ir/bt` — via `av.send` (token) / `av.status`
+- [x] Endpoint `POST /dev/av {action}` (+ `GET /dev/av` statut) — Pydantic `Literal`
+- [x] Hooks de test hors-Pi : `ir_inject {name}` / `bt_inject {line}` (exécutent le mapping sans matériel)
 
 ### Livrable de vérification
 Sur Pi : bouton "Allume TV" dans l'app native → TV s'allume via CEC. Télécommande IR → allume le hub.
+**Statut :** vérifié **via Docker** (daemon stub) : `ir_inject KEY_POWER` → `hub_on` ; `bt_inject TV_ON` → action `tv_on` ; `POST /dev/av tv_on` → `cec-client failed` (pas d'adaptateur HDMI-CEC sur x86 — attendu) ; chaîne Rust core → daemon (`av.send` sans token → `reauth_required`) ; 40 tests core, clippy clean ; UI smoke OK. IR/CEC/BT réels sur Pi : différés (#137). Voir `tracking/sprint-8.md`.
 
 ---
 

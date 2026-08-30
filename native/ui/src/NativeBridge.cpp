@@ -144,7 +144,8 @@ void NativeBridge::dispatch(const QJsonObject &message)
             emit verifyResult(false, QString(), msg);
         else if (method == QStringLiteral("process.kill") || method == QStringLiteral("process.nice")
                  || method == QStringLiteral("docker.start")
-                 || method == QStringLiteral("docker.stop"))
+                 || method == QStringLiteral("docker.stop")
+                 || method == QStringLiteral("av.send"))
             emit devActionResult(method, false, msg);
         else
             emit coreError(code, msg);
@@ -190,6 +191,10 @@ void NativeBridge::dispatch(const QJsonObject &message)
     } else if (method == QStringLiteral("process.kill") || method == QStringLiteral("process.nice")
                || method == QStringLiteral("docker.start")
                || method == QStringLiteral("docker.stop")) {
+        emit devActionResult(method, true, QString());
+    } else if (method == QStringLiteral("av.status")) {
+        emit avStatusReceived(data.toObject().toVariantMap());
+    } else if (method == QStringLiteral("av.send")) {
         emit devActionResult(method, true, QString());
     }
     // ping / health: nothing to surface.
@@ -298,4 +303,15 @@ void NativeBridge::dockerStop(const QString &token, const QString &id)
 {
     send(QStringLiteral("docker.stop"),
          QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("id"), id}});
+}
+
+void NativeBridge::avStatus()
+{
+    send(QStringLiteral("av.status"), {});
+}
+
+void NativeBridge::avSend(const QString &token, const QString &action)
+{
+    send(QStringLiteral("av.send"),
+         QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("action"), action}});
 }

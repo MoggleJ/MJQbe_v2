@@ -13,6 +13,7 @@ Rectangle {
     property var snap: ({})
     property var procs: []
     property var containers: []
+    property var av: ({})
 
     // Pending destructive action, resolved by the re-auth dialog.
     property var pendingAction: null   // function(token)
@@ -27,6 +28,7 @@ Rectangle {
             Bridge.systemSnapshot();
             Bridge.listProcesses(60);
             Bridge.listContainers();
+            Bridge.avStatus();
         }
     }
 
@@ -35,6 +37,7 @@ Rectangle {
         function onSnapshotReceived(s) { page.snap = s; }
         function onProcessesReceived(p) { page.procs = p; }
         function onContainersReceived(c) { page.containers = c; }
+        function onAvStatusReceived(s) { page.av = s; }
         function onVerifyResult(ok, token, error) {
             if (!ok) { gateMsg.text = qsTr("Échec : ") + error; return; }
             if (!page.unlocked) { page.unlocked = true; gateMsg.text = ""; }
@@ -181,6 +184,35 @@ Rectangle {
                     Button {
                         text: qsTr("stop")
                         onClicked: { var id = modelData.id; page.requireReauth(t => Bridge.dockerStop(t, id)); }
+                    }
+                }
+            }
+
+            // AV control (HDMI-CEC / IR / Bluetooth)
+            Text {
+                text: qsTr("AV") + "  —  cec:" + (page.av.cec ? "✓" : "✗")
+                      + "  ir:" + (page.av.ir ? "✓" : "✗")
+                      + "  bt:" + (page.av.bt ? "✓" : "✗")
+                color: ThemeManager.textDim
+                font.pixelSize: 14
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 10
+                Repeater {
+                    model: [
+                        { "label": qsTr("Allume TV"), "action": "tv_on" },
+                        { "label": qsTr("Éteins TV"), "action": "tv_off" },
+                        { "label": "PS4 on", "action": "ps4_on" },
+                        { "label": "PS4 off", "action": "ps4_off" }
+                    ]
+                    delegate: Button {
+                        required property var modelData
+                        text: modelData.label
+                        onClicked: {
+                            var act = modelData.action;
+                            page.requireReauth(t => Bridge.avSend(t, act));
+                        }
                     }
                 }
             }

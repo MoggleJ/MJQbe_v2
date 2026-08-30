@@ -37,6 +37,18 @@ impl HardwareService {
     pub async fn led_set(&self, r: u8, g: u8, b: u8) -> Result<Value, CoreError> {
         self.client.led_set(r, g, b).await
     }
+
+    pub async fn av_status(&self) -> Result<Value, CoreError> {
+        self.client.av_status().await
+    }
+
+    pub async fn av_cec(&self, action: &str) -> Result<Value, CoreError> {
+        const ACTIONS: [&str; 5] = ["tv_on", "tv_off", "tv_toggle", "ps4_on", "ps4_off"];
+        if !ACTIONS.contains(&action) {
+            return Err(CoreError::Internal(format!("invalid AV action: {action}")));
+        }
+        self.client.cec_send(action).await
+    }
 }
 
 #[cfg(test)]
@@ -58,6 +70,15 @@ mod tests {
         assert!(matches!(
             svc.gpio_set(23, true).await.unwrap_err(),
             CoreError::HardwareUnavailable
+        ));
+    }
+
+    #[tokio::test]
+    async fn av_action_is_validated_before_hitting_the_daemon() {
+        let svc = HardwareService::new(DaemonClient::new("/nonexistent.sock"));
+        assert!(matches!(
+            svc.av_cec("explode").await.unwrap_err(),
+            CoreError::Internal(_)
         ));
     }
 }
