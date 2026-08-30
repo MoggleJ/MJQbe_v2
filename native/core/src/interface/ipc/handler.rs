@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::application::{
-    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+    AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
 };
 use crate::domain::{CoreError, SettingsPatch};
 use crate::infrastructure::hardware::Platform;
@@ -16,6 +16,7 @@ pub struct Handler {
     favorites: FavoritesService,
     settings: SettingsService,
     dev: DevService,
+    hardware: HardwareService,
     platform: Platform,
 }
 
@@ -26,6 +27,7 @@ pub struct Services {
     pub favorites: FavoritesService,
     pub settings: SettingsService,
     pub dev: DevService,
+    pub hardware: HardwareService,
 }
 
 #[derive(Deserialize)]
@@ -107,6 +109,36 @@ struct ContainerActionParams {
     id: String,
 }
 
+#[derive(Deserialize)]
+struct GpioGetParams {
+    pin: u8,
+}
+
+#[derive(Deserialize)]
+struct GpioSetParams {
+    token: String,
+    pin: u8,
+    value: bool,
+}
+
+#[derive(Deserialize)]
+struct RelaySetParams {
+    token: String,
+    relay: u8,
+    state: bool,
+}
+
+#[derive(Deserialize)]
+struct LedSetParams {
+    token: String,
+    #[serde(default)]
+    r: u8,
+    #[serde(default)]
+    g: u8,
+    #[serde(default)]
+    b: u8,
+}
+
 impl Handler {
     pub fn new(services: Services, platform: Platform) -> Self {
         Self {
@@ -115,6 +147,7 @@ impl Handler {
             favorites: services.favorites,
             settings: services.settings,
             dev: services.dev,
+            hardware: services.hardware,
             platform,
         }
     }
@@ -241,6 +274,32 @@ impl Handler {
                 Ok(json!({ "ok": true }))
             }
 
+            // --- Hardware (C daemon) : get/info ouverts, set token-gated ---
+            "hardware.info" => Ok(to_value(self.hardware.info().await?)),
+
+            "gpio.get" => {
+                let p: GpioGetParams = params(req)?;
+                Ok(json!({ "pin": p.pin, "value": self.hardware.gpio_get(p.pin).await? }))
+            }
+
+            "gpio.set" => {
+                let p: GpioSetParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                Ok(to_value(self.hardware.gpio_set(p.pin, p.value).await?))
+            }
+
+            "relay.set" => {
+                let p: RelaySetParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                Ok(to_value(self.hardware.relay_set(p.relay, p.state).await?))
+            }
+
+            "led.set" => {
+                let p: LedSetParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                Ok(to_value(self.hardware.led_set(p.r, p.g, p.b).await?))
+            }
+
             other => Err(CoreError::Internal(format!("unknown method: {other}"))),
         }
     }
@@ -272,6 +331,7 @@ fn classify(e: &CoreError) -> (&'static str, String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::infrastructure::hardware::DaemonClient;
 
     fn handler() -> Handler {
         Handler::new(
@@ -281,6 +341,7 @@ mod tests {
                 favorites: FavoritesService::new(None),
                 settings: SettingsService::new(None),
                 dev: DevService::new(Platform::Stub),
+                hardware: HardwareService::new(DaemonClient::new("/nonexistent.sock")),
             },
             Platform::Stub,
         )
@@ -340,8 +401,25 @@ mod tests {
             ),
             ("docker.start", json!({ "token": "bogus", "id": "x" })),
             ("docker.stop", json!({ "token": "bogus", "id": "x" })),
+            (
+                "gpio.set",
+                json!({ "token": "bogus", "pin": 23, "value": true }),
+            ),
+            (
+                "relay.set",
+                json!({ "token": "bogus", "relay": 1, "state": true }),
+            ),
+            ("led.set", json!({ "token": "bogus", "r": 1 })),
         ] {
             assert_eq!(call(m, p).await["error"]["code"], "reauth_required", "{m}");
         }
+    }
+
+    #[tokio::test]
+    async fn gpio_get_without_daemon_is_hardware_unavailable() {
+        assert_eq!(
+            call("gpio.get", json!({ "pin": 23 })).await["error"]["code"],
+            "hardware_unavailable"
+        );
     }
 }

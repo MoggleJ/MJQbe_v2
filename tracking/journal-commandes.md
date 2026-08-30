@@ -83,3 +83,18 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `00:0x` — scrub `postgres://mjqbe:mjqbe@…` → `${POSTGRES_USER}:${POSTGRES_PASSWORD}` dans `docker-compose.native.yml` + `native/README.md` ; `.gitguardian.yaml` étendu.
 - `00:0x` — `flake8 app tests` (via `api/setup.cfg`) — _exit 0._
 - `00:0x` — `venv + pip install -r api/requirements-dev.txt ; pytest tests/ -v` (contre db Docker :15432) — _4 passed._
+
+### Session — Sprint 7 (daemon C — GPIO) [2026-08-31]
+
+- `00:0x` — réécriture `daemon/main.c` (cJSON, socket JSON/ligne, sysfs GPIO, stub) + `daemon/README.md`.
+- `00:0x` — `docker build ./daemon` — OK (warning `strncpy` → `snprintf`).
+- `00:0x` — smoke daemon (container `--user`, socket bind-monté) — ping/info/gpio/relay/led + erreurs OK.
+- `00:0x` — core : +`infrastructure/hardware/daemon_client.rs`, +`application/hardware.rs`, IPC `hardware.info`/`gpio.get`/`gpio.set`/`relay.set`/`led.set` ; suppression stub `Gpio`.
+- `00:0x` — `cargo test` → 39 OK ; `cargo clippy -D warnings` → 1 fix (BufReader temporaire) → clean ; `cargo fmt`.
+- `00:0x` — api : +`app/infrastructure/hardware/daemon_client.py`, +`app/interface/routes/dev.py`, `main.py` include_router.
+- `00:0x` — `cli/dev` : +`gpio` / +`relay`.
+- `00:1x` — `docker compose build daemon api && up -d daemon api` — recréés.
+- `00:1x` — bug : daemon détecté « sysfs » sur x86 (`/sys/class/gpio` existe) → 400. Fix `should_stub()` (device-tree « raspberry pi »). Rebuild.
+- `00:1x` — tests API : `/dev/hardware`, `POST /dev/gpio|relay|led` (+ header JSON), 422 sur valeurs invalides ; `dev gpio 17 1`, `dev relay 3 0` — OK.
+- `00:1x` — E2E Rust core → daemon (stub) : `hardware.info`, `gpio.set` (token), `gpio.get`, `relay.set` — OK.
+- `00:2x` — nettoyage (daemon standalone supprimé, db restaurée prod).

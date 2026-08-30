@@ -4,9 +4,9 @@
 use std::sync::Arc;
 
 use mjqbe_core::application::{
-    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+    AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
 };
-use mjqbe_core::infrastructure::hardware::Platform;
+use mjqbe_core::infrastructure::hardware::{DaemonClient, Platform};
 use mjqbe_core::interface::ipc::{handle_conn, Handler, Services};
 
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -25,6 +25,7 @@ async fn ping_health_and_error_over_socket() {
             favorites: FavoritesService::new(None),
             settings: SettingsService::new(None),
             dev: DevService::new(Platform::Stub),
+            hardware: HardwareService::new(DaemonClient::new("/nonexistent.sock")),
         },
         Platform::Stub,
     ));

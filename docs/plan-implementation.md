@@ -134,22 +134,23 @@ Transitions fluides sur Pi. `htop` montre < 150 Mo RAM pour le process natif.
 
 ---
 
-## Sprint 7 — Daemon C — GPIO [NATIVE]
+## Sprint 7 — Daemon C — GPIO [NATIVE] ✓
 
 **Objectif :** Daemon C opérationnel pour contrôle GPIO.
 
 ### Tâches
-- [ ] Écrire le daemon C (lecture socket Unix, JSON parsing avec cJSON)
-- [ ] Implémenter : `gpio_set`, `gpio_get`, `relay_set` (contrôle relais)
-- [ ] Implémenter : `led_set` (RGB si applicable)
-- [ ] Client Rust dans `native/core/infrastructure/hardware/` pour communiquer avec le daemon
-- [ ] Client Python dans l'API (`infrastructure/hardware/`) — même interface
-- [ ] Stub pour développement hors Pi
-- [ ] Endpoints API : `POST /dev/gpio`, `POST /dev/relay`
-- [ ] Ajouter `dev gpio <pin> <val>` au CLI
+- [x] Daemon C (socket Unix, JSON par ligne, **cJSON** `libcjson`) — `ping`, `info`, dispatch
+- [x] `gpio_set`, `gpio_get`, `relay_set` (map relais 1–4 → GPIO 23/24/25/12, actif-bas)
+- [x] `led_set` (RGB sur 3 GPIO, pins via `MJQBE_LED_R/_G/_B`)
+- [x] Client Rust `native/core/infrastructure/hardware/daemon_client.rs` + `application/hardware.rs` + IPC `hardware.info` / `gpio.get` (ouverts), `gpio.set` / `relay.set` / `led.set` (token de ré-auth)
+- [x] Client Python `api/app/infrastructure/hardware/daemon_client.py` — même protocole
+- [x] Stub hors-Pi : détection device-tree « raspberry pi » (sinon stub) + `MJQBE_GPIO_STUB` / `MJQBE_GPIO_FORCE`
+- [x] Endpoints `POST /dev/gpio`, `POST /dev/relay` (+ `GET /dev/hardware`, `GET /dev/gpio/{pin}`, `POST /dev/led`) — Pydantic
+- [x] CLI `dev gpio <pin> <0|1>` + `dev relay <1-4> <0|1>` (→ API → daemon)
 
 ### Livrable de vérification
 Sur Pi : `dev gpio 23 1` allume le relais 1.
+**Statut :** vérifié **via Docker** (daemon en stub) : `dev gpio 17 1` → `{"pin":17,"value":1}` ; `dev relay 3 0` → `{"relay":3,"state":0,"pin":25}` ; chaîne complète Rust core → daemon (`gpio.set` sans token → `reauth_required`, avec token → OK) ; 39 tests core, clippy clean ; api-ci vert. Vérif GPIO réelle sur Pi : différée. Voir `tracking/sprint-7.md`.
 
 ---
 

@@ -57,6 +57,10 @@ if _domain:
 
 app = FastAPI(title="MJQbe API", version="2.0.0", lifespan=lifespan)
 
+from app.interface.routes import dev as dev_routes  # noqa: E402
+
+app.include_router(dev_routes.router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,

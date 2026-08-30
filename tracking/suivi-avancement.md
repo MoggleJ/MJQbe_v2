@@ -87,3 +87,12 @@ Chaque entrée est horodatée.
 - **Tests** : build Debug+Release OK ; smoke-test Docker → VmRSS ~50 Mo (< 150 Mo cible) ; 37 tests core inchangés.
 - **Différé** : fluidité réelle + heaptrack sur Pi (#137), nav télécommande inter-sections complète, vrai cube 3D shader (nouvelle issue).
 - **Prochaine étape** : commit `sprint-06:`, push + branche, issue, puis Sprint 7 (daemon C GPIO — bloc [NATIVE], vérif Pi différée).
+
+### 2026-08-31 00:20 CEST — Sprint 7 : daemon C GPIO
+- **Fait** : daemon C (cJSON, sysfs GPIO, stub auto, relais/LED), client Rust (`DaemonClient`+`HardwareService`+IPC token-gated), client Python + endpoints `/dev/gpio|relay|led`, CLI `dev gpio`/`dev relay`.
+- **Tests** (Docker, daemon stub) : daemon direct OK ; API endpoints OK (422 sur invalides) ; CLI OK ; Rust core→daemon OK ; 39 tests core ; **CI api-ci de nouveau verte** (P12).
+- **Aussi corrigé ce tour** : P12 (api-ci lint flake8 + 4 tests pytest + scrub GitGuardian) — commit séparé `fix(ci)`, CI verte.
+- **Erreurs / tentatives** : détection stub daemon trop faible (`/sys/class/gpio` générique) → `should_stub()` device-tree (2 rebuilds) ; BufReader temporaire (clippy) — 1 fix.
+- **Différé** : GPIO réel sur Pi (#137) ; protection `/dev/*` → Sprint 10 (#67).
+- **Issues fermées** : #42 #43 #44 #45 #46.
+- **Prochaine étape** : commit `sprint-07:`, push + branche, fermer issues, puis Sprint 8 (daemon AV : IR/CEC/BT).

@@ -5,14 +5,14 @@ use std::sync::Arc;
 use tracing_subscriber::EnvFilter;
 
 use mjqbe_core::application::{
-    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+    AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
 };
 use mjqbe_core::config::Config;
 use mjqbe_core::domain;
 use mjqbe_core::infrastructure::db::{
     Db, PgAuthRepository, PgCatalogRepository, PgFavoritesRepository, PgSettingsRepository,
 };
-use mjqbe_core::infrastructure::hardware::Platform;
+use mjqbe_core::infrastructure::hardware::{DaemonClient, Platform};
 use mjqbe_core::interface::ipc::{self, Handler, Services};
 
 #[tokio::main]
@@ -55,6 +55,7 @@ async fn main() -> anyhow::Result<()> {
             Arc::new(PgSettingsRepository::new(db)) as Arc<dyn domain::SettingsRepository>
         })),
         dev: DevService::new(platform),
+        hardware: HardwareService::new(DaemonClient::from_env()),
     };
 
     let handler = Arc::new(Handler::new(services, platform));

@@ -118,3 +118,28 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 6 | 6 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+
+## 2026-08-31 — Fix CI (P12) + Sprint 7 (daemon GPIO)
+
+### ~00:00 CEST — Fix CI api-ci + GitGuardian (commit `fix(ci)`)
+- **Fichiers** : +`api/setup.cfg` (flake8 + pytest), +`api/requirements-dev.txt`, +`api/tests/{conftest,test_health,test_seed}.py` (4 tests) ; `.github/workflows/api-ci.yml` (lint `cd api && flake8 app tests`, install dev-reqs) ; `.gitguardian.yaml` (ignore `tracking/**`, `**/*.md`, `**/tests/**`) ; scrub `postgres://mjqbe:mjqbe@…` → `${POSTGRES_USER}:${POSTGRES_PASSWORD}` dans `docker-compose.native.yml` + `native/README.md`.
+- **Résultat** : les 3 workflows CI verts. Incident GitGuardian existant → à clôturer dans le dashboard GG (hors CLI).
+
+### ~00:05 CEST — `daemon/main.c` réécrit
+- **Type** : le daemon **pilote du vrai matériel** sur le Pi (sysfs GPIO : export/direction/value). Hors-Pi : **stub** (aucune écriture matérielle) — détection via device-tree `raspberry pi`.
+- **Fichiers** : `daemon/main.c` (réécrit), +`daemon/README.md`.
+- **Câblage figé** : relais 1–4 → BCM 23/24/25/12 (actif-bas) ; LED RGB → 5/6/13.
+
+### ~00:10 CEST — Capacité « hardware » ajoutée au core Rust + à l'API
+- **core** : +`infrastructure/hardware/daemon_client.rs` (client socket daemon), +`application/hardware.rs` ; IPC `gpio.set`/`relay.set`/`led.set` **exigent un token de ré-auth**.
+- **api** : +`app/infrastructure/hardware/daemon_client.py`, +`app/interface/routes/dev.py` (routes `/dev/*`). **Non authentifiées jusqu'au Sprint 10** (noté, issue #67).
+- **cli/dev** : +`gpio` / +`relay` (via API).
+- **Impact machine** : conteneurs `daemon` + `api` reconstruits et recréés (stack `dev` healthy).
+
+### Fichiers hors `native/` / `daemon/` / `api/`
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 7 | 8 tâches `[x]`, bloc statut | sprint terminé |
+| `cli/dev` | +`cmd_gpio`, +`cmd_relay`, dispatch, help | tâche CLI |

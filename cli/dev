@@ -147,6 +147,30 @@ cmd_health() {
     fi
 }
 
+cmd_gpio() {
+    local pin="${1:-}" val="${2:-}"
+    if [[ -z "$pin" || -z "$val" ]]; then
+        error "Usage: dev gpio <pin> <0|1>"
+        return 1
+    fi
+    info "GPIO ${pin} → ${val} (via API POST /dev/gpio)"
+    curl -fsS -X POST "http://localhost:${API_PORT}/dev/gpio" \
+        -H 'Content-Type: application/json' \
+        -d "{\"pin\": ${pin}, \"value\": ${val}}" && echo
+}
+
+cmd_relay() {
+    local relay="${1:-}" state="${2:-}"
+    if [[ -z "$relay" || -z "$state" ]]; then
+        error "Usage: dev relay <1-4> <0|1>"
+        return 1
+    fi
+    info "Relais ${relay} → ${state} (via API POST /dev/relay)"
+    curl -fsS -X POST "http://localhost:${API_PORT}/dev/relay" \
+        -H 'Content-Type: application/json' \
+        -d "{\"relay\": ${relay}, \"state\": ${state}}" && echo
+}
+
 cmd_help() {
     cat <<EOF
 Usage: dev <commande> [options]
@@ -162,6 +186,8 @@ Commandes :
   shell [service]     Ouvre un shell dans un conteneur (défaut : api)
   update              Pull + rebuild + restart
   health              Vérifie la santé de chaque service
+  gpio <pin> <0|1>    Écrit une broche GPIO (via l'API → daemon C)
+  relay <1-4> <0|1>   Commute un relais (via l'API → daemon C)
   help                Affiche ce message
 
 EOF
@@ -181,6 +207,8 @@ case "$COMMAND" in
     shell)    cmd_shell "$@" ;;
     update)   cmd_update "$@" ;;
     health)   cmd_health "$@" ;;
+    gpio)     cmd_gpio "$@" ;;
+    relay)    cmd_relay "$@" ;;
     help|--help|-h) cmd_help ;;
     *)
         error "Commande inconnue : $COMMAND"

@@ -5,12 +5,14 @@ mod auth;
 mod catalog;
 mod dev;
 mod favorites;
+mod hardware;
 mod settings;
 
 pub use auth::{AuthOutcome, AuthService};
 pub use catalog::CatalogService;
 pub use dev::DevService;
 pub use favorites::FavoritesService;
+pub use hardware::HardwareService;
 pub use settings::SettingsService;
 
 use crate::domain::CoreError;

@@ -5,9 +5,10 @@
 //! hardware call fails cleanly with [`CoreError::HardwareUnavailable`] so the
 //! rest of the app keeps working ("stub mode hors Pi").
 
-use std::fmt;
+mod daemon_client;
+pub use daemon_client::DaemonClient;
 
-use crate::domain::CoreError;
+use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Platform {
@@ -44,27 +45,9 @@ impl fmt::Display for Platform {
     }
 }
 
-/// GPIO entry point. Sprint 3 only wires platform-awareness; the transport to
-/// the C daemon is added in Sprint 7.
-pub struct Gpio {
-    platform: Platform,
-}
-
-impl Gpio {
-    pub fn new(platform: Platform) -> Self {
-        Self { platform }
-    }
-
-    pub fn set(&self, _pin: u8, _value: bool) -> Result<(), CoreError> {
-        if self.platform.is_pi() {
-            Err(CoreError::Internal(
-                "GPIO transport not implemented until Sprint 7".into(),
-            ))
-        } else {
-            Err(CoreError::HardwareUnavailable)
-        }
-    }
-}
+// GPIO / relay / LED transport lives in [`DaemonClient`] (client to the C
+// daemon over `/run/mjqbe/daemon.sock`). Off-Pi, either the socket is absent
+// (→ `HardwareUnavailable`) or the daemon itself runs in stub mode.
 
 #[cfg(test)]
 mod tests {
@@ -75,14 +58,5 @@ mod tests {
         assert!(!Platform::Stub.is_pi());
         assert_eq!(Platform::Stub.to_string(), "stub");
         assert_eq!(Platform::RaspberryPi.to_string(), "raspberry-pi");
-    }
-
-    #[test]
-    fn gpio_on_stub_reports_unavailable() {
-        let gpio = Gpio::new(Platform::Stub);
-        assert!(matches!(
-            gpio.set(23, true).unwrap_err(),
-            CoreError::HardwareUnavailable
-        ));
     }
 }
