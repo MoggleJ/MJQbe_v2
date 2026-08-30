@@ -40,3 +40,7 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `23:1x` — `pkill -x mjqbe-core` ; `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d db` — _core arrêté, `db` restauré en config standard (port interne seul)._
 - `23:1x` — `docker rmi mjqbe-native-smoke` ; `rm -rf .smoke-out .native-smoke.Dockerfile` ; `git checkout .gitignore` — _nettoyage artefacts de test._
 - `23:1x` — `rustup component add rustfmt clippy` ; `cargo fmt` ; `cargo clippy --all-targets -- -D warnings` — _fmt clean, 0 warning._
+- `23:1x` — `git add -A && git commit -m "sprint-03: app native ..."` — _commit 0e0750c (50 fichiers, +4541)._
+- `23:1x` — `git push origin dev` — _7649929..0e0750c._
+- `23:1x` — `git checkout -b sprint-03-actions && git push -u origin sprint-03-actions && git checkout dev` — _branche de sprint archivée, retour sur dev._
+- `23:1x` — `gh issue create` ×3 — _issues #137 (vérif Pi), #138 (réorg QML), #139 (smoke-test QML CI)._
