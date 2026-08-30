@@ -154,3 +154,9 @@ Chaque entrée est horodatée.
 - **Tests** : build 54 modules, tsc clean, vitest 2/2, SPA re-déployée live.
 - **Issues fermées** : #114–#118.
 - **Prochaine étape** : Sprint 16 (CLI `dev` complet) puis Sprint 17 (sécu/optim/déploiement). **Le bloc web (10-15) est terminé.**
+
+### 2026-08-31 03:30 CEST — Sprint 16 : CLI dev complète
+- **Fait** : dev native/backup/restore/sprint/install ; health enrichi (DB + API) ; logs -l filtre ; help regroupé.
+- **Tests** : bash -n OK ; help/health/backup/restore/logs vérifiés live.
+- **Issues fermées** : #119–#127.
+- **Prochaine étape** : **Sprint 17 (sécurité, optimisation, déploiement final)** — dernier sprint.

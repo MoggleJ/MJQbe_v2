@@ -255,3 +255,9 @@ Chaque entrée est horodatée.
 - **Fichiers** : +`frontend/src/components/LoadingCube.tsx` ; modifiés : `frontend/src/App.tsx`, `frontend/src/pages/Settings.tsx`, `frontend/src/styles.css`.
 - Image `frontend` reconstruite + recréée.
 - `docs/plan-implementation.md` Sprint 15 → `[x]` + statut.
+
+---
+## 2026-08-31 — Sprint 16 (CLI dev complète)
+- **Fichier** : `cli/dev` (+5 sous-commandes, health/logs enrichis, help réécrit) ; `.gitignore` +`backups/`.
+- `dev backup` crée `backups/*.sql.gz` (gitignoré) ; `dev restore` écrase la base après confirmation.
+- `docs/plan-implementation.md` Sprint 16 → `[x]` + statut.

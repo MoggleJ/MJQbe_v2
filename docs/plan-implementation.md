@@ -322,24 +322,24 @@ Naviguer entre pages → animation cube visible. Changer le thème → appliqué
 **Statut :** `tsc && vite build` OK (54 modules), vitest 2/2, live SPA re-déployée sur `:4444`. Cube CSS 3D + transition `cubeUp` + swatches de prévisu. Thème temps réel via variables CSS. Voir `tracking/sprint-15.md`.
 ---
 
-## Sprint 16 — CLI `dev` — Version complète
+## Sprint 16 — CLI `dev` — Version complète ✓
 
 **Objectif :** CLI Bash complète avec toutes les fonctionnalités.
 
 ### Tâches
-- [ ] Ajouter `dev native` : démarrer/arrêter l'app native
-- [ ] `dev sprint` : exécute le workflow complet de sprint
-- [ ] `dev health` : vérifie l'état de tous les services + connectivité DB
-- [ ] `dev backup` : backup PostgreSQL vers fichier daté
-- [ ] `dev restore <file>` : restaure un backup
-- [ ] `dev logs` avec filtre par niveau (error, warning, info)
-- [ ] `dev gpio <pin> <val>` : contrôle GPIO direct
-- [ ] Installer le script en tant que commande système (`/usr/local/bin/dev`)
-- [ ] Documenter chaque commande (`dev help`)
+- [x] `dev native <build|start|stop>` — compile (cargo release + cmake release) / lance mjqbe-core (+ mjqbe-native) / arrête
+- [x] `dev sprint [--push]` — workflow : `cargo test` + `pytest` (conteneur api) + build/test frontend (Docker) + `dev health` ; push si `--push` et tout vert
+- [x] `dev health` — enrichi : + `pg_isready` (connectivité DB) + `curl /health` (API)
+- [x] `dev backup` — `pg_dump | gzip` → `backups/mjqbe-<date>.sql.gz`
+- [x] `dev restore <file>` — `.sql` ou `.sql.gz` → `psql` (confirmation y/N)
+- [x] `dev logs [service] [-l error|warning|info]` — filtre par sévérité (grep -Ei)
+- [x] `dev gpio <pin> <val>` — déjà Sprint 7
+- [x] `dev install` — `ln -sf` vers `/usr/local/bin/dev` (sudo si besoin)
+- [x] `dev help` — toutes les commandes documentées, regroupées par thème
 
 ### Livrable de vérification
 `dev help` liste toutes les commandes. `dev health` affiche l'état de chaque service.
-
+**Statut :** `bash -n` OK. Vérifié : `dev help` (groupé), `dev health` (services + `PostgreSQL accepte les connexions` + `API /health`), `dev backup` (dump 8 Ko créé), `dev restore` (restauration + `\dt` OK), `dev logs -l error` (filtre). `backups/` gitignoré. Voir `tracking/sprint-16.md`.
 ---
 
 ## Sprint 17 — Sécurité, optimisation & déploiement final

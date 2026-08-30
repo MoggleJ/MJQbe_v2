@@ -158,3 +158,7 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `03:1x` — frontend : +`components/LoadingCube.tsx`, `styles.css` (.cube-*, cubeUp, .theme-swatch, prefers-reduced-motion), `App.tsx` (LoadingCube si loading), `Settings.tsx` (swatches de prévisu).
 - `03:1x` — `docker build ./frontend --target builder` + `npx tsc --noEmit && npx vitest run` — 54 modules, tsc clean, 2/2.
 - `03:1x` — `docker compose up -d --build frontend` — SPA re-déployée, `/` + `/api/health` OK.
+
+### Session — Sprint 16 (CLI dev complète) [2026-08-31]
+- `03:2x` — `cli/dev` : +`cmd_native`, +`cmd_backup`, +`cmd_restore`, +`cmd_sprint`, +`cmd_install` ; `cmd_health` (+pg_isready +curl /health) ; `cmd_logs` (+`-l` filtre) ; `cmd_help` réécrit ; dispatch. `.gitignore` +`backups/`.
+- `03:2x` — `bash -n cli/dev` OK ; `dev help` / `dev health` / `dev backup` (dump 8 Ko) / `dev restore` (auto-y, \dt OK) / `dev logs -l error` — OK.

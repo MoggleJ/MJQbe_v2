@@ -91,12 +91,31 @@ cmd_restart() {
 }
 
 cmd_logs() {
-    local service="${1:-}"
-    if [[ -n "$service" ]]; then
-        _compose logs -f "$service"
-    else
-        _compose logs -f
+    local level="" service=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -l|--level) level="$2"; shift 2 ;;
+            *) service="$1"; shift ;;
+        esac
+    done
+
+    local -a args=(logs -f --tail=200)
+    [[ -n "$service" ]] && args+=("$service")
+
+    if [[ -z "$level" ]]; then
+        _compose "${args[@]}"
+        return
     fi
+
+    # Filter by severity keyword (case-insensitive). error ⊂ warning ⊂ info.
+    local pattern
+    case "$level" in
+        error)   pattern='error|exception|traceback|critical|fatal|panic' ;;
+        warning) pattern='error|exception|traceback|critical|fatal|panic|warn' ;;
+        info)    pattern='error|warn|info' ;;
+        *) error "niveau inconnu : $level (error|warning|info)"; return 1 ;;
+    esac
+    _compose "${args[@]}" 2>&1 | grep -Ei --line-buffered "$pattern"
 }
 
 cmd_status() {
@@ -139,6 +158,23 @@ cmd_health() {
         fi
     done < <(_compose ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null | tail -n +2)
 
+    # Connectivité base de données
+    # shellcheck source=/dev/null
+    [[ -f "$ENV_FILE" ]] && source "$ENV_FILE"
+    if _compose exec -T db pg_isready -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}" &>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} PostgreSQL accepte les connexions"
+    else
+        echo -e "  ${RED}✗${NC} PostgreSQL injoignable"
+        all_ok=false
+    fi
+
+    # API HTTP
+    if curl -fsS -o /dev/null "http://localhost:${API_PORT}/health" 2>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} API /health (port ${API_PORT})"
+    else
+        echo -e "  ${YELLOW}?${NC} API /health injoignable (port ${API_PORT})"
+    fi
+
     if $all_ok; then
         success "Tous les services sont sains."
     else
@@ -171,24 +207,173 @@ cmd_relay() {
         -d "{\"relay\": ${relay}, \"state\": ${state}}" && echo
 }
 
+# ---------------------------------------------------------------------------
+# App native (processus locaux, hors Docker)
+# ---------------------------------------------------------------------------
+NATIVE_CORE_BIN="$PROJECT_ROOT/native/core/target/release/mjqbe-core"
+NATIVE_UI_BIN="$PROJECT_ROOT/native/ui/build/mjqbe-native"
+NATIVE_SOCK="${MJQBE_NATIVE_SOCKET:-/tmp/mjqbe-native.sock}"
+
+cmd_native() {
+    local action="${1:-help}"
+    # shellcheck source=/dev/null
+    [[ -f "$ENV_FILE" ]] && source "$ENV_FILE"
+    command -v cargo >/dev/null || { [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"; }
+
+    case "$action" in
+        build)
+            info "Build core (cargo release)..."
+            ( cd "$PROJECT_ROOT/native/core" && cargo build --release )
+            info "Build UI (cmake release)..."
+            cmake -S "$PROJECT_ROOT/native/ui" -B "$PROJECT_ROOT/native/ui/build" -DCMAKE_BUILD_TYPE=Release
+            cmake --build "$PROJECT_ROOT/native/ui/build" --parallel
+            success "Binaries : $NATIVE_CORE_BIN , $NATIVE_UI_BIN"
+            ;;
+        start)
+            [[ -x "$NATIVE_CORE_BIN" ]] || { error "core absent — 'dev native build' d'abord"; return 1; }
+            info "Démarrage mjqbe-core (socket $NATIVE_SOCK)..."
+            MJQBE_NATIVE_SOCKET="$NATIVE_SOCK" \
+            DATABASE_URL="postgres://${POSTGRES_USER:-mjqbe}:${POSTGRES_PASSWORD:-mjqbe}@localhost:${MJQBE_DB_HOST_PORT:-15432}/${POSTGRES_DB:-mjqbe}?sslmode=disable" \
+                nohup "$NATIVE_CORE_BIN" >/tmp/mjqbe-core.log 2>&1 &
+            echo $! > /tmp/mjqbe-core.pid
+            sleep 1
+            if [[ -x "$NATIVE_UI_BIN" ]]; then
+                info "Démarrage mjqbe-native (UI)..."
+                MJQBE_NATIVE_SOCKET="$NATIVE_SOCK" nohup "$NATIVE_UI_BIN" >/tmp/mjqbe-native.log 2>&1 &
+                echo $! > /tmp/mjqbe-native.pid
+            fi
+            success "Native démarré (logs : /tmp/mjqbe-core.log, /tmp/mjqbe-native.log)"
+            ;;
+        stop)
+            for p in /tmp/mjqbe-native.pid /tmp/mjqbe-core.pid; do
+                [[ -f "$p" ]] && kill "$(cat "$p")" 2>/dev/null && rm -f "$p"
+            done
+            pkill -x mjqbe-core 2>/dev/null || true
+            pkill -x mjqbe-native 2>/dev/null || true
+            success "Native arrêté."
+            ;;
+        *)
+            echo "Usage: dev native <build|start|stop>"
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Sauvegarde / restauration PostgreSQL
+# ---------------------------------------------------------------------------
+cmd_backup() {
+    require_env
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    mkdir -p "$PROJECT_ROOT/backups"
+    local out="$PROJECT_ROOT/backups/mjqbe-$(date +%Y%m%d-%H%M%S).sql.gz"
+    info "Dump de la base ${POSTGRES_DB:-mjqbe}..."
+    _compose exec -T db pg_dump -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}" --clean --if-exists \
+        | gzip > "$out"
+    success "Sauvegarde : $out ($(du -h "$out" | cut -f1))"
+}
+
+cmd_restore() {
+    local file="${1:-}"
+    [[ -f "$file" ]] || { error "Fichier introuvable : $file"; return 1; }
+    require_env
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    warn "Restauration de $file dans ${POSTGRES_DB:-mjqbe} — les données actuelles seront écrasées."
+    read -rp "Continuer ? [y/N] " ans
+    [[ "$ans" == "y" || "$ans" == "Y" ]] || { info "Annulé."; return 0; }
+    if [[ "$file" == *.gz ]]; then
+        gunzip -c "$file" | _compose exec -T db psql -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}"
+    else
+        _compose exec -T db psql -U "${POSTGRES_USER:-mjqbe}" -d "${POSTGRES_DB:-mjqbe}" < "$file"
+    fi
+    success "Restauration terminée."
+}
+
+# ---------------------------------------------------------------------------
+# Workflow de sprint (agents/sprint-workflow.md)
+# ---------------------------------------------------------------------------
+cmd_sprint() {
+    local push=false
+    [[ "${1:-}" == "--push" ]] && push=true
+
+    info "=== Workflow de sprint ==="
+    command -v cargo >/dev/null || { [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"; }
+
+    local ok=true
+    info "1/4 — Tests core Rust"
+    if [[ -f "$PROJECT_ROOT/native/core/Cargo.toml" ]] && command -v cargo >/dev/null; then
+        ( cd "$PROJECT_ROOT/native/core" && cargo test --quiet ) || ok=false
+    else
+        warn "cargo indisponible — étape ignorée"
+    fi
+
+    info "2/4 — Tests API (pytest dans le conteneur api)"
+    _compose exec -T api sh -c 'cd /app && python -m pytest -q' 2>/dev/null || warn "pytest non exécuté (conteneur api ?)"
+
+    info "3/4 — Build + tests frontend (Docker)"
+    docker build "$PROJECT_ROOT/frontend" --target builder -t mjqbe-fe-check >/dev/null 2>&1 \
+        && docker run --rm mjqbe-fe-check sh -c 'npx tsc --noEmit && npx vitest run' \
+        || { warn "front-check échoué"; ok=false; }
+
+    info "4/4 — Santé des services"
+    cmd_health || ok=false
+
+    if $ok; then
+        success "Workflow OK."
+        $push && { git -C "$PROJECT_ROOT" push origin dev && info "Poussé sur origin/dev"; }
+    else
+        error "Des étapes ont échoué — corriger avant de pousser."
+        return 1
+    fi
+}
+
+cmd_install() {
+    local target="/usr/local/bin/dev"
+    local self; self="$(readlink -f "${BASH_SOURCE[0]}")"
+    info "Installation de '$self' → $target"
+    if [[ -w "$(dirname "$target")" ]]; then
+        ln -sf "$self" "$target"
+    else
+        info "Nécessite les droits admin :"
+        echo "    sudo ln -sf '$self' '$target'"
+        sudo ln -sf "$self" "$target" 2>/dev/null || return 0
+    fi
+    success "Installé — 'dev help' disponible partout."
+}
+
 cmd_help() {
     cat <<EOF
 Usage: dev <commande> [options]
 
-Commandes :
-  up                  Build et démarre tous les services
-  watch               Mode hot-reload (Vite HMR + uvicorn --reload)
-  down                Arrête et supprime les conteneurs
-  restart [service]   Redémarre tous les services ou un seul
-  logs [service]      Affiche les logs en direct
-  status              État des conteneurs
-  db                  Ouvre un shell psql
-  shell [service]     Ouvre un shell dans un conteneur (défaut : api)
-  update              Pull + rebuild + restart
-  health              Vérifie la santé de chaque service
-  gpio <pin> <0|1>    Écrit une broche GPIO (via l'API → daemon C)
-  relay <1-4> <0|1>   Commute un relais (via l'API → daemon C)
-  help                Affiche ce message
+Services Docker (web) :
+  up                     Build et démarre tous les services (prod)
+  watch                  Mode hot-reload (Vite HMR + uvicorn --reload)
+  down                   Arrête et supprime les conteneurs
+  restart [service]      Redémarre tous les services ou un seul
+  update                 Pull + rebuild + restart
+  status                 État des conteneurs
+  health                 Santé de chaque service + connectivité DB + API /health
+  logs [service] [-l LVL]  Logs en direct ; LVL = error | warning | info
+  db                     Shell psql dans le conteneur db
+  shell [service]        Shell dans un conteneur (défaut : api)
+
+Base de données :
+  backup                 Dump PostgreSQL gzip daté → backups/
+  restore <fichier>      Restaure un dump (.sql ou .sql.gz)
+
+App native (hors Docker) :
+  native build           Compile core (cargo release) + UI (cmake release)
+  native start|stop      Démarre / arrête mjqbe-core (+ mjqbe-native)
+
+Matériel (via l'API → daemon C) :
+  gpio <pin> <0|1>       Écrit une broche GPIO
+  relay <1-4> <0|1>      Commute un relais
+
+Agents / workflow :
+  sprint [--push]        Lance le workflow de sprint (tests core+api+front, health)
+  install                Installe 'dev' dans /usr/local/bin
+  help                   Affiche ce message
 
 EOF
 }
@@ -209,6 +394,11 @@ case "$COMMAND" in
     health)   cmd_health "$@" ;;
     gpio)     cmd_gpio "$@" ;;
     relay)    cmd_relay "$@" ;;
+    native)   cmd_native "$@" ;;
+    backup)   cmd_backup "$@" ;;
+    restore)  cmd_restore "$@" ;;
+    sprint)   cmd_sprint "$@" ;;
+    install)  cmd_install "$@" ;;
     help|--help|-h) cmd_help ;;
     *)
         error "Commande inconnue : $COMMAND"

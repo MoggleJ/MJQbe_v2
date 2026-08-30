@@ -32,3 +32,6 @@ Thumbs.db
 
 # smoke-test scratch output
 /.smoke-out/
+
+# DB backups (dev)
+backups/
