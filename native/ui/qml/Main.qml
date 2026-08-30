@@ -71,7 +71,56 @@ ApplicationWindow {
             height: parent.height
             property string currentPageName: "Home"
             initialItem: homePage
+
+            // "Cube up" page transition (PowerPoint-style, CDC §4.4): the leaving
+            // page slides up and shrinks away, the entering page rises from below.
+            // layer.enabled batches each page into one GPU texture so the move
+            // stays cheap on the Pi; it is turned back off once settled.
+            replaceExit: Transition {
+                PropertyAction { property: "layer.enabled"; value: true }
+                SequentialAnimation {
+                    ParallelAnimation {
+                        NumberAnimation { property: "y"; from: 0; to: -height * 0.6; duration: 200; easing.type: Easing.InCubic }
+                        NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 200 }
+                        NumberAnimation { property: "scale"; from: 1; to: 0.92; duration: 200 }
+                    }
+                    PropertyAction { property: "layer.enabled"; value: false }
+                    PropertyAction { property: "opacity"; value: 1 }
+                    PropertyAction { property: "scale"; value: 1 }
+                }
+            }
+            replaceEnter: Transition {
+                PropertyAction { property: "layer.enabled"; value: true }
+                SequentialAnimation {
+                    ParallelAnimation {
+                        NumberAnimation { property: "y"; from: height * 0.6; to: 0; duration: 260; easing.type: Easing.OutCubic }
+                        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 260 }
+                        NumberAnimation { property: "scale"; from: 0.92; to: 1; duration: 260 }
+                    }
+                    PropertyAction { property: "layer.enabled"; value: false }
+                }
+            }
         }
+    }
+
+    // Loading overlay: MJQbe cube until the core connects (or after 4s give up).
+    Rectangle {
+        id: loadingOverlay
+        anchors.fill: parent
+        color: ThemeManager.bg
+        visible: opacity > 0
+        opacity: Bridge.connected ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 400 } }
+        z: 100
+
+        LoadingCube { anchors.centerIn: parent; size: 120 }
+
+        Timer {
+            interval: 4000; running: true; repeat: false
+            onTriggered: if (!Bridge.connected) loadingOverlay.opacity = 0
+        }
+        // Swallow input while shown.
+        MouseArea { anchors.fill: parent; enabled: parent.opacity > 0.5 }
     }
 
     Component { id: homePage;     Home {} }

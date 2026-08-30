@@ -35,6 +35,7 @@ qt_add_qml_module(mjqbe-native
         qml/CategoryChips.qml
         qml/AppGrid.qml
         qml/Gauge.qml
+        qml/LoadingCube.qml
         qml/pages/Home.qml
         qml/pages/AllApps.qml
         qml/pages/Search.qml

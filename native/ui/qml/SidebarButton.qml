@@ -12,8 +12,11 @@ Rectangle {
     width: parent ? parent.width : 200
     height: 40
     radius: 8
+    activeFocusOnTab: true
     color: active ? ThemeManager.accent
-                  : (hover.hovered ? ThemeManager.surface : "transparent")
+                  : (activeFocus || hover.hovered ? ThemeManager.surface : "transparent")
+    border.color: activeFocus ? ThemeManager.accent : "transparent"
+    border.width: 1
 
     Behavior on color { ColorAnimation { duration: 120 } }
 

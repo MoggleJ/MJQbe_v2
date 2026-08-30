@@ -81,3 +81,9 @@ Chaque entrée est horodatée.
 - **Différé** : vérif Pi (#137), terminal PTY/ANSI (nouvelle issue), URL VNC configurable (nouvelle issue).
 - **État machine** : stack restaurée (db prod), core arrêté, image smoke supprimée.
 - **Prochaine étape** : commit `sprint-05:`, push + branche, issues, puis Sprint 6 (UX & animations natives).
+
+### 2026-08-30 23:53 CEST — Sprint 6 : UX & animations natives
+- **Fait** : LoadingCube (4 faces rotation Y, pas de Qt3D), overlay de chargement, transitions StackView « cube up » (Y+scale+opacity, layer.enabled transitoire), SidebarButton focusable, build Release.
+- **Tests** : build Debug+Release OK ; smoke-test Docker → VmRSS ~50 Mo (< 150 Mo cible) ; 37 tests core inchangés.
+- **Différé** : fluidité réelle + heaptrack sur Pi (#137), nav télécommande inter-sections complète, vrai cube 3D shader (nouvelle issue).
+- **Prochaine étape** : commit `sprint-06:`, push + branche, issue, puis Sprint 7 (daemon C GPIO — bloc [NATIVE], vérif Pi différée).

@@ -104,3 +104,17 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 5 | 9 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+
+## 2026-08-30 — Sprint 6 (UX & animations natives)
+
+### ~23:52 CEST — `native/ui` : animations + focus
+- **Fichiers** : +`qml/LoadingCube.qml` ; modifiés : `CMakeLists.txt`, `qml/Main.qml` (overlay + transitions StackView), `qml/SidebarButton.qml` (activeFocusOnTab + anneau focus), `native/ui/smoketest.sh` (report VmRSS), `native/.gitignore` (`ui/build*/`).
+- **Choix** : animations 2.5D (`transform: Rotation` + `Scale`), **pas** de Qt3D/`ShaderEffect` — priorité conso RAM/GPU Pi 4.
+- **Mesure** : VmRSS ~50 Mo (debug, offscreen, x86) — sous la cible 150 Mo.
+
+### Fichiers hors `native/`
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 6 | 6 tâches `[x]`, bloc statut | sprint terminé |

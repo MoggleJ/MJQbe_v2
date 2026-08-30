@@ -20,10 +20,13 @@ fi
 
 CID=$(docker run "${RUN_ARGS[@]}" "$IMG" sh -c '
   /build/mjqbe-native --windowed > /out/ui.log 2>&1 &
-  P=$!; sleep 5
-  if kill -0 $P 2>/dev/null; then echo "VERDICT: OK — QML tree loaded" >> /out/ui.log; kill $P
+  P=$!; sleep 6
+  if kill -0 $P 2>/dev/null; then
+    RSS=$(awk "/VmRSS/{print \$2}" /proc/$P/status)
+    echo "VERDICT: OK — QML tree loaded (VmRSS ${RSS} kB, debug build)" >> /out/ui.log
+    kill $P
   else echo "VERDICT: FAIL — exited $?" >> /out/ui.log; fi')
-sleep 8
+sleep 9
 docker rm -f "$CID" >/dev/null 2>&1 || true
 
 echo "----- ui.log -----"; cat "$OUT/ui.log"

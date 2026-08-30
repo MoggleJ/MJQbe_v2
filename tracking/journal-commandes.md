@@ -67,3 +67,10 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `23:4x` — core (background) + `python3 scratchpad/ipc_probe5.py /tmp/mjqbe-dev.sock admin` — snapshot/process/docker/verify/token E2E OK.
 - `23:47` — `bash native/ui/smoketest.sh /tmp/mjqbe-dev.sock` — « VERDICT: OK ».
 - `23:47` — `pkill -x mjqbe-core` ; `docker rmi mjqbe-native-smoke` ; `docker compose ... prod.yml up -d db` — nettoyage.
+
+### Session — Sprint 6 (UX & animations natives)
+
+- `23:5x` — UI : +`qml/LoadingCube.qml`, overlay chargement + transitions `StackView` cube-up dans `Main.qml`, `SidebarButton` focusable.
+- `23:5x` — `cmake -S native/ui -B build-release -DCMAKE_BUILD_TYPE=Release && cmake --build build-release` — OK (binaire 700 Ko).
+- `23:5x` — `sed -i 's#ui/build/#ui/build*/#' native/.gitignore` — ignore aussi build-release/.
+- `23:5x` — `bash native/ui/smoketest.sh` (Docker offscreen, sans core) — « QML tree loaded (VmRSS 49940 kB) » → ~50 Mo < 150 Mo cible.
