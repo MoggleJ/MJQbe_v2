@@ -74,3 +74,12 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `23:5x` — `cmake -S native/ui -B build-release -DCMAKE_BUILD_TYPE=Release && cmake --build build-release` — OK (binaire 700 Ko).
 - `23:5x` — `sed -i 's#ui/build/#ui/build*/#' native/.gitignore` — ignore aussi build-release/.
 - `23:5x` — `bash native/ui/smoketest.sh` (Docker offscreen, sans core) — « QML tree loaded (VmRSS 49940 kB) » → ~50 Mo < 150 Mo cible.
+
+### Session — Fix CI api-ci + GitGuardian (2026-08-31)
+
+- `00:0x` — `gh run list` / `gh run view 33334393947` — _échec = étape **Lint** (flake8 E221/E501), tests skipped._
+- `00:0x` — `python3 -m venv /tmp/flake8venv && flake8 api/app ...` — _reproduit : E221 (alignement `=`) + E501 seed.py/main.py._
+- `00:0x` — création `api/setup.cfg`, `api/requirements-dev.txt`, `api/tests/{conftest,test_health,test_seed}.py` ; édition `api-ci.yml`.
+- `00:0x` — scrub `postgres://mjqbe:mjqbe@…` → `${POSTGRES_USER}:${POSTGRES_PASSWORD}` dans `docker-compose.native.yml` + `native/README.md` ; `.gitguardian.yaml` étendu.
+- `00:0x` — `flake8 app tests` (via `api/setup.cfg`) — _exit 0._
+- `00:0x` — `venv + pip install -r api/requirements-dev.txt ; pytest tests/ -v` (contre db Docker :15432) — _4 passed._

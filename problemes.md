@@ -171,3 +171,22 @@ CMD uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT:-4848}
 2. `QtQuick.Templates` reste requis par `QtQuick.Controls` : smoke-test lancé dans une image Docker `debian:bookworm` (même base Qt 6.4 que le Pi) avec tous les `qml6-module-*` → arbre QML chargé sans erreur.
 
 **Statut :** Résolu (dev = via Docker ; sur le Pi, les paquets `qml6-module-qtquick-*` sont à installer — voir `docs/deploiement.md` à venir, Sprint 17)
+
+---
+
+## P12 — CI `API CI` rouge (lint) + alerte GitGuardian
+
+**Symptôme :** job « Tests & Lint » de `api-ci.yml` en échec à l'étape **Lint** ; les tests étaient *skipped*. En parallèle, GitGuardian a levé une alerte.
+
+**Causes :**
+1. `flake8 api/app --max-line-length=100` (args CLI) écrasait toute config. Le code Sprint 1–2 aligne volontairement les `=` → **E221** (+ quelques **E501** à 105–108 car.). Aucun test dans `api/tests/` → `pytest` exit 5 (mais masqué, lint échouait avant).
+2. GitGuardian : chaînes `postgres://mjqbe:mjqbe@…` (exemples/commentaires) dans `docker-compose.native.yml` et `native/README.md`.
+
+**Solution :**
+- `api/setup.cfg` : `[flake8]` `max-line-length=120`, `extend-ignore=E203,W503,E221,E241` ; `[tool:pytest]` `pythonpath=.`.
+- `api/requirements-dev.txt` (pytest + httpx + flake8) ; `api-ci.yml` : `cd api && flake8 app tests`, install de `requirements-dev.txt`.
+- `api/tests/` : `conftest.py` (fixture `client` = `TestClient` → lifespan → migrations+seed) + `test_health.py` + `test_seed.py` (schéma, admin, idempotence). 4 tests, vérifiés contre le PostgreSQL Docker.
+- Chaînes de connexion : remplacées par `${POSTGRES_USER}:${POSTGRES_PASSWORD}` (lus depuis `.env`).
+- `.gitguardian.yaml` : `ignore-paths` += `tracking/**`, `**/*.md`, `**/tests/**` ; `ignore-known-secrets: true`.
+
+**Statut :** Résolu côté repo (lint + 4 tests OK en local). L'incident GitGuardian existant est à clôturer manuellement dans le dashboard GG.

@@ -40,14 +40,16 @@ Erreur : `{ "id", "ok": false, "error": { "code", "message" } }`
 Prérequis : Rust (rustup), CMake ≥ 3.21, Qt6 ≥ 6.4 (`qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools`).
 
 ```bash
-# 1. PostgreSQL accessible sur l'hôte (port publié via l'override natif)
+# 1. PostgreSQL accessible sur l'hôte (port 15432 publié via l'override natif)
 docker compose -f docker-compose.yml -f docker-compose.native.yml up -d db
 
 # 2. Core (serveur IPC) — mode stub hors-Pi
+#    Les identifiants viennent de .env (jamais en clair ici).
 cd native/core
+set -a && . ../../.env && set +a
 MJQBE_STUB=1 \
 MJQBE_NATIVE_SOCKET=/tmp/mjqbe-native.sock \
-DATABASE_URL='postgres://mjqbe:mjqbe@localhost:5432/mjqbe?sslmode=disable' \
+DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:15432/${POSTGRES_DB}?sslmode=disable" \
 cargo run
 
 # 3. UI (autre terminal)

@@ -9,7 +9,8 @@
 #
 # Usage :
 #   docker compose -f docker-compose.yml -f docker-compose.native.yml up -d db
-#   DATABASE_URL='postgres://mjqbe:mjqbe@localhost:15432/mjqbe?sslmode=disable'
+#   DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:15432/${POSTGRES_DB}?sslmode=disable"
+#   (POSTGRES_* proviennent de .env — jamais de mot de passe en clair ici)
 services:
   db:
     ports:

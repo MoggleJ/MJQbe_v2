@@ -4,3 +4,8 @@ ignore-paths:
   - "**/*.example"
   - "docs/**"
   - "agents/**"
+  - "tracking/**"          # journaux de dev — placeholders uniquement
+  - "**/*.md"              # documentation — pas de secrets réels
+  - "**/tests/**"          # fixtures de test (mots de passe factices bcrypt)
+  - "native/core/tests/**"
+ignore-known-secrets: true
