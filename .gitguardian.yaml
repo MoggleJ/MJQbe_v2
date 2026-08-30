@@ -8,4 +8,6 @@ ignore-paths:
   - "**/*.md"              # documentation — pas de secrets réels
   - "**/tests/**"          # fixtures de test (mots de passe factices bcrypt)
   - "native/core/tests/**"
+  - "cli/**"               # script dev — uniquement des fallbacks .env, pas de secret
 ignore-known-secrets: true
+

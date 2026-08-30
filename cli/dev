@@ -231,9 +231,11 @@ cmd_native() {
             ;;
         start)
             [[ -x "$NATIVE_CORE_BIN" ]] || { error "core absent — 'dev native build' d'abord"; return 1; }
+            [[ -n "${POSTGRES_PASSWORD:-}" ]] || { error "POSTGRES_PASSWORD manquant (voir .env)"; return 1; }
             info "Démarrage mjqbe-core (socket $NATIVE_SOCK)..."
+            # Le core compose DATABASE_URL depuis POSTGRES_* — on ne passe que le hôte/port dev.
             MJQBE_NATIVE_SOCKET="$NATIVE_SOCK" \
-            DATABASE_URL="postgres://${POSTGRES_USER:-mjqbe}:${POSTGRES_PASSWORD:-mjqbe}@localhost:${MJQBE_DB_HOST_PORT:-15432}/${POSTGRES_DB:-mjqbe}?sslmode=disable" \
+            POSTGRES_HOST=localhost POSTGRES_PORT="${MJQBE_DB_HOST_PORT:-15432}" \
                 nohup "$NATIVE_CORE_BIN" >/tmp/mjqbe-core.log 2>&1 &
             echo $! > /tmp/mjqbe-core.pid
             sleep 1

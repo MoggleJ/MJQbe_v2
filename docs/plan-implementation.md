@@ -342,20 +342,21 @@ Naviguer entre pages → animation cube visible. Changer le thème → appliqué
 **Statut :** `bash -n` OK. Vérifié : `dev help` (groupé), `dev health` (services + `PostgreSQL accepte les connexions` + `API /health`), `dev backup` (dump 8 Ko créé), `dev restore` (restauration + `\dt` OK), `dev logs -l error` (filtre). `backups/` gitignoré. Voir `tracking/sprint-16.md`.
 ---
 
-## Sprint 17 — Sécurité, optimisation & déploiement final
+## Sprint 17 — Sécurité, optimisation & déploiement final ✓
 
 **Objectif :** Audit de sécurité, optimisation mémoire, déploiement production.
 
 ### Tâches
-- [ ] Audit de sécurité web : CORS, headers HTTP (HSTS, CSP), injection SQL (Pydantic)
-- [ ] Rate limiting sur les endpoints d'authentification
-- [ ] Profiling mémoire sur Pi 4 : web stack + app native
-- [ ] Optimiser les images Docker (multi-stage builds, alpine)
-- [ ] Configurer HTTPS (certificat auto-signé ou Let's Encrypt si domaine)
-- [ ] Tests de charge légers
-- [ ] Documenter la procédure de déploiement production dans `docs/deploiement.md`
-- [ ] Créer les GitHub Actions pour CI (tests automatiques sur push)
-- [ ] Revue finale vs `docs/CDC.md` (checklist complète)
+- [x] Audit sécu web — `SecurityHeadersMiddleware` (CSP `default-src 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `COOP`, `Permissions-Policy`, HSTS si `https`) ; CORS resserré (méthodes + headers explicites) ; injection SQL : ORM + params + Pydantic (test `test_security`)
+- [x] Rate limiting auth — `RateLimitMiddleware` fenêtre 60 s / IP sur `/auth/login|register|refresh` (`auth.rate_limit_per_minute`, défaut 20) → 429 + `Retry-After`
+- [~] Profiling mémoire Pi 4 — méthode documentée (`docs/deploiement.md §6`) ; mesure réelle sur Pi → #130
+- [x] Images Docker — frontend & daemon **multi-stage** (builder → nginx:alpine / debian-slim) ; api `python:3.11-slim` mono-stage (acceptable)
+- [x] HTTPS — `nginx.https.conf.template` (redirection 80→443, HSTS) sélectionné par `HTTPS=1` dans le `Dockerfile` ; piloté par `config.yml` `server.https` + `cert_path` ; procédure Let's Encrypt dans `docs/deploiement.md`
+- [x] Tests de charge — `scripts/loadtest.sh` (`hey`/`wrk` sinon fallback curl) ; run léger : ~35 req/s séquentiel, 0 échec
+- [x] `docs/deploiement.md` — Pi : prérequis, stack web, HTTPS, sauvegardes, app native systemd, sécurité, mise à jour, profiling
+- [x] GitHub Actions CI — `api-ci` / `docker-build` / `native-build` verts sur push (Sprint 1 + fix P12)
+- [x] Revue finale vs CDC — `docs/revue-finale.md` (checklist §2–§10)
 
 ### Livrable de vérification
 Tous les tests passent. Audit OWASP Top 10 coché. `docker stats` + `htop` sur Pi montrent une consommation mémoire acceptable.
+**Statut :** **39 tests api** verts (+3 sécurité), flake8 clean. Live : en-têtes sécu présents (API + nginx), rate limit → 20×401 puis 429, loadtest OK, pas de régression. Profiling Pi + HTTPS avec vrai certificat : #130 / à faire au déploiement. Voir `tracking/sprint-17.md` + `docs/revue-finale.md`.

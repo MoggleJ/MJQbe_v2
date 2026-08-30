@@ -160,3 +160,10 @@ Chaque entrée est horodatée.
 - **Tests** : bash -n OK ; help/health/backup/restore/logs vérifiés live.
 - **Issues fermées** : #119–#127.
 - **Prochaine étape** : **Sprint 17 (sécurité, optimisation, déploiement final)** — dernier sprint.
+
+### 2026-08-31 03:55 CEST — Sprint 17 : sécurité / optimisation / déploiement
+- **Fait** : SecurityHeaders + RateLimit middlewares, CORS resserré, config rate_limit ; nginx HTTPS opt-in ; docs/deploiement.md + docs/revue-finale.md + scripts/loadtest.sh ; CI déjà verte.
+- **Tests** : 39 api (+3 sécu), flake8 clean ; live : headers OK, 429 après 20 logins, loadtest OK, pas de régression.
+- **GitGuardian** : `cli/dev` corrigé (plus d'URL avec fallback mot de passe).
+- **Issues fermées** : #128, #129, #131–#136. #130 (profiling Pi) reste — matériel.
+- **=> Sprints 1–17 tous terminés.** Reste ouvert : #2, #130, #137–#145 (suivi matériel Pi + affinages).

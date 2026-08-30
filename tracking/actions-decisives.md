@@ -261,3 +261,12 @@ Chaque entrée est horodatée.
 - **Fichier** : `cli/dev` (+5 sous-commandes, health/logs enrichis, help réécrit) ; `.gitignore` +`backups/`.
 - `dev backup` crée `backups/*.sql.gz` (gitignoré) ; `dev restore` écrase la base après confirmation.
 - `docs/plan-implementation.md` Sprint 16 → `[x]` + statut.
+
+---
+## 2026-08-31 — Sprint 17 (sécurité / optim / déploiement)
+- **api** : +`app/interface/security_mw.py` ; `main.py` (2 middlewares + CORS restreint) ; `config/config.yml` (+`auth.rate_limit_per_minute`).
+- **frontend** : +`nginx.https.conf.template` ; `Dockerfile` (choix http/https via `HTTPS`, EXPOSE 443) ; `nginx.conf.template` (+headers).
+- **docs** : +`docs/deploiement.md`, +`docs/revue-finale.md` ; +`scripts/loadtest.sh`.
+- **GitGuardian** : `cli/dev` — suppression de l'URL `postgres://…:${POSTGRES_PASSWORD:-mjqbe}@…` (fallback en clair) → passage de `POSTGRES_HOST`/`PORT` ; `.gitguardian.yaml` +`cli/**`.
+- **Impact machine** : images `api` + `frontend` reconstruites/recréées. `backups/` gitignoré, non commité.
+- `docs/plan-implementation.md` Sprint 17 → `[x]` + statut. **Plan 100 % coché** (17/17).

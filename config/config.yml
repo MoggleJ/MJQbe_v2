@@ -24,6 +24,8 @@ database:
 auth:
   access_token_expire_minutes: 60
   refresh_token_expire_days: 30
+  # Fenêtre glissante de 60 s, par IP, sur /auth/login|register|refresh.
+  rate_limit_per_minute: 20
 
 logging:
   level: "info"

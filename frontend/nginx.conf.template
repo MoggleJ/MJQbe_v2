@@ -1,8 +1,16 @@
+# Rendu par envsubst au démarrage (voir Dockerfile). Variable : SERVER_NAME.
+# HTTP simple + proxy /api. Pour du TLS, utiliser nginx.https.conf.template
+# (HTTPS=1 → le Dockerfile choisit ce template).
+
 server {
     listen 80;
     server_name ${SERVER_NAME};
     root /usr/share/nginx/html;
     index index.html;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy no-referrer always;
 
     location / {
         try_files $uri $uri/ /index.html;

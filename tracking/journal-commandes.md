@@ -162,3 +162,10 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 ### Session — Sprint 16 (CLI dev complète) [2026-08-31]
 - `03:2x` — `cli/dev` : +`cmd_native`, +`cmd_backup`, +`cmd_restore`, +`cmd_sprint`, +`cmd_install` ; `cmd_health` (+pg_isready +curl /health) ; `cmd_logs` (+`-l` filtre) ; `cmd_help` réécrit ; dispatch. `.gitignore` +`backups/`.
 - `03:2x` — `bash -n cli/dev` OK ; `dev help` / `dev health` / `dev backup` (dump 8 Ko) / `dev restore` (auto-y, \dt OK) / `dev logs -l error` — OK.
+
+### Session — Sprint 17 (sécurité / optim / déploiement) [2026-08-31]
+- `03:4x` — api : +`interface/security_mw.py` (SecurityHeaders + RateLimit), `main.py` (add_middleware, CORS resserré), `config.yml` (+rate_limit_per_minute), +`tests/test_security.py` (3). `conftest.py` : `AUTH_RATE_LIMIT_PER_MIN=100000`.
+- `03:4x` — GitGuardian : `cli/dev` `dev native start` ne compose plus de DATABASE_URL (passe POSTGRES_HOST/PORT) ; `.gitguardian.yaml` +`cli/**`.
+- `03:4x` — frontend : +`nginx.https.conf.template`, `Dockerfile` (EXPOSE 80 443, envsubst http/https), `nginx.conf.template` (+headers).
+- `03:4x` — +`docs/deploiement.md`, +`docs/revue-finale.md`, +`scripts/loadtest.sh`.
+- `03:5x` — `docker compose up -d --build api frontend` ; headers sécu OK (API+nginx) ; 25× login → 20×401 + 5×429 ; loadtest ~35 req/s 0 échec ; `flake8` + `pytest 39/39` ; `/dev/hardware` admin → 200 (pas de régression).

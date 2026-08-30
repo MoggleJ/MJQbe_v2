@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.infrastructure.db import seed
 from app.infrastructure.db.session import SessionLocal
 from app.interface.deps import get_config, require_admin
+from app.interface.security_mw import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.interface.routes import admin as admin_routes
 from app.interface.routes import auth as auth_routes
 from app.interface.routes import catalog as catalog_routes
@@ -51,12 +52,20 @@ if _domain:
 
 app = FastAPI(title="MJQbe API", version="2.0.0", lifespan=lifespan)
 
+_auth_cfg = _config.get("auth", {})
+app.add_middleware(
+    RateLimitMiddleware,
+    limit=int(os.getenv("AUTH_RATE_LIMIT_PER_MIN", _auth_cfg.get("rate_limit_per_minute", 20))),
+    window=60.0,
+)
+app.add_middleware(SecurityHeadersMiddleware, hsts=_https)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
 
 app.include_router(auth_routes.router)
