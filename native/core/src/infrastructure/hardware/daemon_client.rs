@@ -35,7 +35,7 @@ impl DaemonClient {
         params["cmd"] = json!(cmd);
 
         let connect = UnixStream::connect(&self.socket_path);
-        let stream = tokio::time::timeout(Duration::from_secs(3), connect)
+        let stream = tokio::time::timeout(Duration::from_secs(8), connect)
             .await
             .map_err(|_| CoreError::HardwareUnavailable)?
             .map_err(|_| CoreError::HardwareUnavailable)?;
@@ -50,7 +50,7 @@ impl DaemonClient {
 
         let mut reader = BufReader::new(rd);
         let mut resp = String::new();
-        tokio::time::timeout(Duration::from_secs(3), reader.read_line(&mut resp))
+        tokio::time::timeout(Duration::from_secs(8), reader.read_line(&mut resp))
             .await
             .map_err(|_| CoreError::Internal("daemon timeout".into()))?
             .map_err(|e| CoreError::Internal(e.to_string()))?;

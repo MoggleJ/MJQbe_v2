@@ -18,6 +18,7 @@ ApplicationWindow {
     property string layout: "grid"
     property string iconSize: "medium"
     property var favoriteIds: []
+    property var voice: ({ "enabled": false, "engine": "stub" })
 
     // --- core wiring -------------------------------------------------------
     Connections {
@@ -33,6 +34,7 @@ ApplicationWindow {
             if (s.default_mode && window.mode !== "dev") window.mode = s.default_mode;
         }
         function onFavoritesReceived(ids) { window.favoriteIds = ids; }
+        function onVoiceStatusReceived(s) { window.voice = s; }
         function onFavoriteToggled(appId, favorited) {
             var next = window.favoriteIds.slice();
             var i = next.indexOf(appId);
@@ -60,6 +62,10 @@ ApplicationWindow {
             height: parent.height
             modeTitle: window.modeTitles[window.mode]
             currentPage: stack.currentPageName
+            voiceEnabled: window.voice.enabled === true
+            voiceWakeRecent: window.voice.last_wake_secs !== undefined
+                             && window.voice.last_wake_secs !== null
+                             && window.voice.last_wake_secs <= 3
             onNavigate: (page) => window.go(page)
             onSwitchMode: window.toggleMode()
             onOpenSettings: window.go("Settings")
@@ -153,6 +159,15 @@ ApplicationWindow {
     function toggleMode() {
         window.mode = (window.mode === "tv") ? "desktop" : "tv";
         window.go(stack.currentPageName); // rebuild the data-bound page for the new mode
+    }
+
+    // Lightweight always-on poll for the voice wake indicator.
+    Timer {
+        interval: 2000
+        running: Bridge.connected
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: Bridge.voiceStatus()
     }
 
     Component.onCompleted: {

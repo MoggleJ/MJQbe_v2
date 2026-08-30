@@ -89,8 +89,10 @@ cJSON *av_cec(const char *action) {
         return out;
     }
 
+    /* `timeout` guards against cec-client hanging when no adapter is present. */
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "echo '%s' | cec-client -s -d 1 >/dev/null 2>&1", seq);
+    snprintf(cmd, sizeof(cmd),
+             "timeout 6 sh -c \"echo '%s' | cec-client -s -d 1\" >/dev/null 2>&1", seq);
     int rc = system(cmd);
     cJSON_AddBoolToObject(out, "sent", rc == 0);
     if (rc != 0) cJSON_AddStringToObject(out, "error", "cec-client failed");

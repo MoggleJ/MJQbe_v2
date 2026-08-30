@@ -6,6 +6,7 @@ use tracing_subscriber::EnvFilter;
 
 use mjqbe_core::application::{
     AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
+    VoiceService,
 };
 use mjqbe_core::config::Config;
 use mjqbe_core::domain;
@@ -56,6 +57,7 @@ async fn main() -> anyhow::Result<()> {
         })),
         dev: DevService::new(platform),
         hardware: HardwareService::new(DaemonClient::from_env()),
+        voice: VoiceService::new(true),
     };
 
     let handler = Arc::new(Handler::new(services, platform));

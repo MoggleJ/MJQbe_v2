@@ -163,3 +163,24 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 8 | 7 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+
+## 2026-08-31 — Sprint 9 (reconnaissance vocale)
+
+### ~01:00 CEST — `native/core` : module voix
+- **Type** : nouveau code (grammaire + use case + IPC). Recogniser réel `vosk_engine.rs` **feature-gated** (`[features] vosk = []`) — non compilé par défaut, aucune nouvelle dépendance runtime.
+- **Fichiers** : +`infrastructure/voice/{mod,grammar,vosk_engine}.rs`, +`application/voice.rs` ; `domain/{entities,mod}.rs` (+`VoiceAction`, `ParsedUtterance`), `domain/repository.rs` + `infrastructure/db/catalog_repo.rs` + `application/catalog.rs` (`search_apps`/`find_app`), `interface/ipc/handler.rs` (+3 méthodes + `run_voice_action`), `main.rs`, `tests/ipc_roundtrip.rs`, `Cargo.toml`.
+- **IPC** : `voice.set_enabled` **token de ré-auth** ; `voice.status`/`voice.simulate` ouverts (simulate = outil de dev).
+
+### ~01:02 CEST — `daemon/av.c` : garde-fou CEC
+- `cec_send` → `timeout 6 sh -c "…cec-client…"` (évite le blocage sans adaptateur). `DaemonClient` (Rust) timeout 3 s → 8 s.
+- **Impact machine** : image `daemon` reconstruite + conteneur recréé.
+
+### ~01:03 CEST — `native/ui`
+- `Sidebar.qml` : indicateur voix (point pulsant). `Main.qml` : Timer 2 s `voice.status`. `Dev.qml` : panneau simulate + toggle.
+
+### Fichiers hors core/ui/daemon
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 9 | tâches `[x]`/`[~]`, bloc statut | sprint terminé (capture audio différée) |

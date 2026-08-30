@@ -42,6 +42,15 @@ impl CatalogService {
         self.repo()?.recent_apps(user_id, mode, limit).await
     }
 
+    /// Best single match for a fuzzy name (voice "lance X").
+    pub async fn find_app(&self, query: &str) -> Result<Option<App>, CoreError> {
+        let q = query.trim();
+        if q.is_empty() {
+            return Ok(None);
+        }
+        Ok(self.repo()?.search_apps(q, 1).await?.into_iter().next())
+    }
+
     fn repo(&self) -> Result<&Arc<dyn CatalogRepository>, CoreError> {
         self.repo.as_ref().ok_or(CoreError::DbUnavailable)
     }
@@ -99,6 +108,29 @@ mod tests {
                 is_active: true,
             }])
         }
+
+        async fn search_apps(&self, query: &str, _limit: i64) -> Result<Vec<App>, CoreError> {
+            Ok(vec![App {
+                id: 7,
+                name: query.to_string(),
+                icon: None,
+                url: Some(format!("https://{query}.example")),
+                category_id: None,
+                mode: "tv".into(),
+                is_web: true,
+                is_active: true,
+            }])
+        }
+    }
+
+    #[tokio::test]
+    async fn find_app_returns_best_match() {
+        let svc = CatalogService::new(Some(Arc::new(FakeRepo)));
+        assert_eq!(
+            svc.find_app("netflix").await.unwrap().unwrap().name,
+            "netflix"
+        );
+        assert!(svc.find_app("   ").await.unwrap().is_none());
     }
 
     #[tokio::test]

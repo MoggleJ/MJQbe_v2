@@ -104,3 +104,11 @@ Chaque entrée est horodatée.
 - **Différé** : IR/CEC/BT réels sur Pi (#137) ; `nav_*` non câblés à une cible UI.
 - **Issues fermées** : #47 #48 #49 #50 #51 #52.
 - **Prochaine étape** : commit `sprint-08:`, push + branche, fermer issues, puis Sprint 9 (reconnaissance vocale).
+
+### 2026-08-31 01:05 CEST — Sprint 9 : reconnaissance vocale
+- **Fait** : grammaire wake-word + commandes FR (13 tests), VoiceService, dispatch CEC/GPIO/launch (find_app ILIKE), IPC voice.*, indicateur Sidebar pulsant, panneau test Dev.qml. Vosk réel = feature cargo `vosk` off (squelette `vosk_engine.rs`).
+- **Tests** (Docker stub) : voice.simulate (télé/hub/netflix/inexistant), token gate, voice_disabled ; 53 tests core, clippy clean ; UI smoke OK.
+- **Erreurs / tentatives** : fmt (vosk_engine manquant + feature non déclarée + import) 3 fixes ; `cec_send` bloquant → `timeout 6` + client 8 s (1 fix + rebuild).
+- **Différé** : capture audio Vosk réelle (libvosk+cpal+ISD1820/micro) + LaunchApp qui n'ouvre rien → nouvelles issues ; test voix réel sur Pi (#137).
+- **Issues fermées** : #54 #55 #56 #58 ; #53 + #57 rescopées → nouvelle issue.
+- **Prochaine étape** : commit `sprint-09:`, push + branche, issues, puis **Sprint 10 (WEB — authentification JWT + OAuth)**.

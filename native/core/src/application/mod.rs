@@ -7,6 +7,7 @@ mod dev;
 mod favorites;
 mod hardware;
 mod settings;
+mod voice;
 
 pub use auth::{AuthOutcome, AuthService};
 pub use catalog::CatalogService;
@@ -14,6 +15,7 @@ pub use dev::DevService;
 pub use favorites::FavoritesService;
 pub use hardware::HardwareService;
 pub use settings::SettingsService;
+pub use voice::VoiceService;
 
 use crate::domain::CoreError;
 

@@ -9,6 +9,8 @@ Rectangle {
 
     property string modeTitle: "MJ TV"
     property string currentPage: "Home"
+    property bool voiceEnabled: false
+    property bool voiceWakeRecent: false
 
     signal navigate(string page)
     signal switchMode()
@@ -27,12 +29,35 @@ Rectangle {
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: 20 }
         spacing: 6
 
-        Text {
-            text: root.modeTitle
-            color: ThemeManager.text
-            font.pixelSize: 24
-            font.bold: true
+        Row {
+            spacing: 8
             bottomPadding: 20
+
+            Text {
+                text: root.modeTitle
+                color: ThemeManager.text
+                font.pixelSize: 24
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            // Voice wake indicator: dim dot when listening, pulses on wake word.
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 12
+                height: 12
+                radius: 6
+                visible: root.voiceEnabled
+                color: root.voiceWakeRecent ? ThemeManager.accent : ThemeManager.textDim
+                opacity: root.voiceWakeRecent ? 1.0 : 0.5
+
+                SequentialAnimation on scale {
+                    running: root.voiceWakeRecent
+                    loops: Animation.Infinite
+                    NumberAnimation { from: 1.0; to: 1.6; duration: 400; easing.type: Easing.OutQuad }
+                    NumberAnimation { from: 1.6; to: 1.0; duration: 400; easing.type: Easing.InQuad }
+                }
+            }
         }
 
         Repeater {

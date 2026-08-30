@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use mjqbe_core::application::{
     AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
+    VoiceService,
 };
 use mjqbe_core::infrastructure::hardware::{DaemonClient, Platform};
 use mjqbe_core::interface::ipc::{handle_conn, Handler, Services};
@@ -26,6 +27,7 @@ async fn ping_health_and_error_over_socket() {
             settings: SettingsService::new(None),
             dev: DevService::new(Platform::Stub),
             hardware: HardwareService::new(DaemonClient::new("/nonexistent.sock")),
+            voice: VoiceService::new(true),
         },
         Platform::Stub,
     ));

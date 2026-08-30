@@ -9,6 +9,12 @@ license = "MIT"
 name = "mjqbe-core"
 path = "src/main.rs"
 
+[features]
+# Real offline voice recognition (Vosk). Off by default: needs libvosk + a model,
+# only present on the Pi image. Enabling it for real also requires adding the
+# `vosk` and `cpal` optional dependencies (see src/infrastructure/voice/vosk_engine.rs).
+vosk = []
+
 [dependencies]
 tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "io-util", "signal", "sync", "time", "process"] }
 serde = { version = "1", features = ["derive"] }

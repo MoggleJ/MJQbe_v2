@@ -109,3 +109,12 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `00:4x` — `docker compose build daemon api && up -d` ; `GET /dev/av` `{cec:true,ir:false,bt:false}` ; `POST /dev/av tv_on` → `cec-client failed` (pas d'adaptateur) ; `explode` → 422.
 - `00:4x` — E2E Rust core → daemon : `av.status`, `av.send` (token) OK ; UI smoke Docker → QML OK.
 - `00:4x` — nettoyage (daemon standalone, image smoke, db prod).
+
+### Session — Sprint 9 (reconnaissance vocale) [2026-08-31]
+
+- `01:0x` — core : +`infrastructure/voice/{mod,grammar,vosk_engine}.rs`, +`application/voice.rs`, `VoiceAction`/`ParsedUtterance`, `CatalogRepository::search_apps`, IPC `voice.status/simulate/set_enabled` + `run_voice_action`. Cargo `[features] vosk = []`.
+- `01:0x` — `cargo fmt` (échec initial : `vosk_engine.rs` inexistant → créé ; puis `cfg(feature="vosk")` inconnu → feature déclarée ; puis import `VoiceService` manquant → ajouté). `cargo test` → 53 OK, `clippy -D warnings` clean.
+- `01:0x` — UI : `NativeBridge` +voice*, `Main.qml` Timer voix + prop, `Sidebar.qml` indicateur pulsant, `Dev.qml` panneau voix. `cmake --build` OK.
+- `01:0x` — E2E : `voice.simulate` (télé→cec, hub→relay, netflix→launch résolu, inexistant→unresolved, set_enabled token + voice_disabled) ; UI smoke OK.
+- `01:0x` — bug : `cec_send` bloque (cec-client sans adaptateur) → `daemon timeout`. Fix : `timeout 6 sh -c` dans `av.c` + timeout DaemonClient 3s→8s. Rebuild daemon → cec ~0,5 s.
+- `01:0x` — nettoyage (daemon standalone, image smoke, db prod).

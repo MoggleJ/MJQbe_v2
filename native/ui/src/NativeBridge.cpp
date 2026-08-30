@@ -145,7 +145,8 @@ void NativeBridge::dispatch(const QJsonObject &message)
         else if (method == QStringLiteral("process.kill") || method == QStringLiteral("process.nice")
                  || method == QStringLiteral("docker.start")
                  || method == QStringLiteral("docker.stop")
-                 || method == QStringLiteral("av.send"))
+                 || method == QStringLiteral("av.send")
+                 || method == QStringLiteral("voice.set_enabled"))
             emit devActionResult(method, false, msg);
         else
             emit coreError(code, msg);
@@ -196,6 +197,13 @@ void NativeBridge::dispatch(const QJsonObject &message)
         emit avStatusReceived(data.toObject().toVariantMap());
     } else if (method == QStringLiteral("av.send")) {
         emit devActionResult(method, true, QString());
+    } else if (method == QStringLiteral("voice.status")) {
+        emit voiceStatusReceived(data.toObject().toVariantMap());
+    } else if (method == QStringLiteral("voice.simulate")) {
+        emit voiceResult(data.toObject().toVariantMap());
+    } else if (method == QStringLiteral("voice.set_enabled")) {
+        emit devActionResult(method, true, QString());
+        voiceStatus();
     }
     // ping / health: nothing to surface.
 }
@@ -314,4 +322,20 @@ void NativeBridge::avSend(const QString &token, const QString &action)
 {
     send(QStringLiteral("av.send"),
          QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("action"), action}});
+}
+
+void NativeBridge::voiceStatus()
+{
+    send(QStringLiteral("voice.status"), {});
+}
+
+void NativeBridge::voiceSimulate(const QString &text)
+{
+    send(QStringLiteral("voice.simulate"), QJsonObject{{QStringLiteral("text"), text}});
+}
+
+void NativeBridge::voiceSetEnabled(const QString &token, bool enabled)
+{
+    send(QStringLiteral("voice.set_enabled"),
+         QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("enabled"), enabled}});
 }

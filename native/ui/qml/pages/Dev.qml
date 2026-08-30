@@ -14,6 +14,7 @@ Rectangle {
     property var procs: []
     property var containers: []
     property var av: ({})
+    property var voice: ({ "enabled": false, "engine": "stub" })
 
     // Pending destructive action, resolved by the re-auth dialog.
     property var pendingAction: null   // function(token)
@@ -29,6 +30,7 @@ Rectangle {
             Bridge.listProcesses(60);
             Bridge.listContainers();
             Bridge.avStatus();
+            Bridge.voiceStatus();
         }
     }
 
@@ -45,6 +47,11 @@ Rectangle {
         }
         function onDevActionResult(action, ok, error) {
             actionMsg.text = ok ? (action + " ✓") : (action + " — " + error);
+        }
+        function onVoiceStatusReceived(s) { page.voice = s; }
+        function onVoiceResult(r) {
+            voiceMsg.text = "wake=" + r.wake + "  action=" + JSON.stringify(r.action)
+                            + "  → " + r.result;
         }
     }
 
@@ -216,6 +223,34 @@ Rectangle {
                     }
                 }
             }
+
+            // Voice
+            Text {
+                text: qsTr("Voix") + "  —  " + (page.voice.enabled ? qsTr("activée") : qsTr("désactivée"))
+                      + "  (" + (page.voice.engine || "stub") + ")"
+                color: ThemeManager.textDim
+                font.pixelSize: 14
+            }
+            Row {
+                Layout.fillWidth: true
+                spacing: 10
+                TextField {
+                    id: voicePhrase
+                    width: 320
+                    placeholderText: qsTr("ex : ok hub allume la télé")
+                    color: ThemeManager.text
+                    onAccepted: Bridge.voiceSimulate(text)
+                }
+                Button { text: qsTr("Simuler"); onClicked: Bridge.voiceSimulate(voicePhrase.text) }
+                Button {
+                    text: page.voice.enabled ? qsTr("Désactiver") : qsTr("Activer")
+                    onClicked: {
+                        var want = !page.voice.enabled;
+                        page.requireReauth(t => Bridge.voiceSetEnabled(t, want));
+                    }
+                }
+            }
+            Text { id: voiceMsg; color: ThemeManager.textDim; font.pixelSize: 11; wrapMode: Text.Wrap; Layout.fillWidth: true }
 
             // Terminal
             Row {

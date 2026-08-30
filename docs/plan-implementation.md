@@ -173,20 +173,24 @@ Sur Pi : bouton "Allume TV" dans l'app native → TV s'allume via CEC. Télécom
 
 ---
 
-## Sprint 9 — Reconnaissance vocale [NATIVE]
+## Sprint 9 — Reconnaissance vocale [NATIVE] ✓
 
 **Objectif :** Wake word + commandes vocales.
 
 ### Tâches
-- [ ] Intégrer Vosk (offline, léger) pour reconnaissance vocale
-- [ ] Implémenter détection du wake word (ex: "OK hub")
-- [ ] Parser les commandes : "allume la TV", "éteins la TV", "lance Netflix"
-- [ ] Connecter les commandes aux actions existantes (CEC, GPIO)
-- [ ] Lier avec ISD1820 (déclenchement GPIO) ou micro USB en continu
-- [ ] Indicateur visuel dans l'app native quand le wake word est détecté
+- [x] Intégrer Vosk — `infrastructure/voice/vosk_engine.rs` derrière la feature cargo `vosk` (off par défaut : `libvosk` + modèle = uniquement sur le Pi) ; `engine_name()` (`stub`/`vosk`)
+- [x] Détection du wake word — `grammar.rs` (`ok hub` / `okay hub` / `ok qube` en tête ou en milieu de phrase)
+- [x] Parser les commandes — `map_command` : `allume/éteins la tv|télé`, `démarre la ps4`, `allume le hub`, `lance <app>` — normalisation accents, **13 tests unitaires**
+- [x] Connecter aux actions — `Handler::run_voice_action` : `Cec→HardwareService::av_cec`, `Relay→relay_set`, `LaunchApp→CatalogService::find_app` (ILIKE) → URL
+- [~] ISD1820 / micro USB continu — capture audio réelle **différée** (nouvelle issue) ; hook `voice.simulate` pour tester le pipeline sans micro
+- [x] Indicateur visuel — point dans la `Sidebar` (pulse sur wake récent, `last_wake_secs ≤ 3`), poll `voice.status` (Timer 2 s)
+
+### IPC
+`voice.status` (ouvert), `voice.simulate {text}` (ouvert, dev), `voice.set_enabled {token,enabled}` (token de ré-auth).
 
 ### Livrable de vérification
 Sur Pi : dire "OK hub allume la TV" → TV s'allume.
+**Statut :** vérifié **via Docker** (daemon stub) : `voice.simulate "ok hub allume la télé"` → action `cec/tv_on` → daemon ; `"…allume le hub"` → `relay:1=1` ; `"…lance netflix"` → `launch:https://netflix.com` (résolu en base) ; `"…truc inexistant"` → `launch_unresolved` ; `voice.set_enabled` sans token → `reauth_required` ; après désactivation → `voice_disabled` ; 53 tests core, clippy clean ; UI smoke OK. Reconnaissance audio réelle sur Pi : différée. Voir `tracking/sprint-9.md`.
 
 ---
 

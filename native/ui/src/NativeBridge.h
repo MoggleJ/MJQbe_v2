@@ -56,6 +56,9 @@ public:
     Q_INVOKABLE void dockerStop(const QString &token, const QString &id);
     Q_INVOKABLE void avStatus();
     Q_INVOKABLE void avSend(const QString &token, const QString &action);
+    Q_INVOKABLE void voiceStatus();
+    Q_INVOKABLE void voiceSimulate(const QString &text);
+    Q_INVOKABLE void voiceSetEnabled(const QString &token, bool enabled);
 
 signals:
     void connectedChanged();
@@ -76,6 +79,8 @@ signals:
     void containersReceived(const QVariantList &containers);
     void devActionResult(const QString &action, bool ok, const QString &error);
     void avStatusReceived(const QVariantMap &status);
+    void voiceStatusReceived(const QVariantMap &status);
+    void voiceResult(const QVariantMap &result);
 
 private slots:
     void onConnected();

@@ -16,6 +16,9 @@ pub trait CatalogRepository: Send + Sync {
         mode: &str,
         limit: i64,
     ) -> Result<Vec<App>, CoreError>;
+
+    /// Fuzzy name search across the tv/desktop catalogs (voice "lance X").
+    async fn search_apps(&self, query: &str, limit: i64) -> Result<Vec<App>, CoreError>;
 }
 
 /// Access to local admin accounts for native authentication.

@@ -113,3 +113,30 @@ pub struct DockerContainer {
     pub state: String,
     pub status: String,
 }
+
+// ---------------------------------------------------------------------------
+// Voice control (Sprint 9)
+// ---------------------------------------------------------------------------
+
+/// What a recognised voice command resolves to.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum VoiceAction {
+    /// An HDMI-CEC action name (`tv_on`, `tv_off`, `ps4_on`, ...).
+    Cec { action: String },
+    /// A relay toggle (relay 1 = the hub).
+    Relay { relay: u8, on: bool },
+    /// Launch an app by (fuzzy) name — the caller resolves it against the catalog.
+    LaunchApp { query: String },
+}
+
+/// Result of interpreting one utterance.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ParsedUtterance {
+    /// Whether the wake word ("ok hub") was present.
+    pub wake: bool,
+    /// The command portion after the wake word, normalised.
+    pub command: Option<String>,
+    /// The action the command maps to, if any.
+    pub action: Option<VoiceAction>,
+}

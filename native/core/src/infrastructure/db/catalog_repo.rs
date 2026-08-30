@@ -68,6 +68,27 @@ impl CatalogRepository for PgCatalogRepository {
             .collect())
     }
 
+    async fn search_apps(&self, query: &str, limit: i64) -> Result<Vec<App>, CoreError> {
+        let rows = sqlx::query(
+            r#"
+            SELECT id, name, icon, url, category_id, mode, is_web, is_active
+              FROM apps
+             WHERE mode IN ('tv', 'desktop')
+               AND is_active = TRUE
+               AND name ILIKE '%' || $1 || '%'
+             ORDER BY length(name), name
+             LIMIT $2
+            "#,
+        )
+        .bind(query)
+        .bind(limit.clamp(1, 20))
+        .fetch_all(&self.db.pool)
+        .await
+        .map_err(|e| CoreError::Db(e.to_string()))?;
+
+        Ok(rows.iter().map(app_from_row).collect())
+    }
+
     async fn recent_apps(
         &self,
         user_id: i32,

@@ -3,8 +3,9 @@ use serde_json::{json, Value};
 
 use crate::application::{
     AuthService, CatalogService, DevService, FavoritesService, HardwareService, SettingsService,
+    VoiceService,
 };
-use crate::domain::{CoreError, SettingsPatch};
+use crate::domain::{CoreError, SettingsPatch, VoiceAction};
 use crate::infrastructure::hardware::Platform;
 
 use super::protocol::{Request, Response};
@@ -17,6 +18,7 @@ pub struct Handler {
     settings: SettingsService,
     dev: DevService,
     hardware: HardwareService,
+    voice: VoiceService,
     platform: Platform,
 }
 
@@ -28,6 +30,7 @@ pub struct Services {
     pub settings: SettingsService,
     pub dev: DevService,
     pub hardware: HardwareService,
+    pub voice: VoiceService,
 }
 
 #[derive(Deserialize)]
@@ -145,6 +148,17 @@ struct AvSendParams {
     action: String,
 }
 
+#[derive(Deserialize)]
+struct VoiceEnableParams {
+    token: String,
+    enabled: bool,
+}
+
+#[derive(Deserialize)]
+struct VoiceSimulateParams {
+    text: String,
+}
+
 impl Handler {
     pub fn new(services: Services, platform: Platform) -> Self {
         Self {
@@ -154,6 +168,7 @@ impl Handler {
             settings: services.settings,
             dev: services.dev,
             hardware: services.hardware,
+            voice: services.voice,
             platform,
         }
     }
@@ -314,7 +329,60 @@ impl Handler {
                 Ok(to_value(self.hardware.av_cec(&p.action).await?))
             }
 
+            // --- Voice ---
+            "voice.status" => Ok(json!({
+                "enabled": self.voice.is_enabled(),
+                "engine": self.voice.engine(),
+                "last_wake_secs": self.voice.seconds_since_wake(),
+            })),
+
+            "voice.set_enabled" => {
+                let p: VoiceEnableParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                self.voice.set_enabled(p.enabled);
+                Ok(json!({ "enabled": p.enabled }))
+            }
+
+            "voice.simulate" => {
+                let p: VoiceSimulateParams = params(req)?;
+                let parsed = self.voice.interpret(&p.text);
+                let result = self.run_voice_action(&parsed.action).await;
+                Ok(json!({
+                    "wake": parsed.wake,
+                    "command": parsed.command,
+                    "action": parsed.action,
+                    "result": result,
+                }))
+            }
+
             other => Err(CoreError::Internal(format!("unknown method: {other}"))),
+        }
+    }
+}
+
+impl Handler {
+    /// Carry out a recognised voice action; returns a short human-readable result.
+    async fn run_voice_action(&self, action: &Option<VoiceAction>) -> String {
+        let Some(action) = action else {
+            return "no_action".to_string();
+        };
+        if !self.voice.is_enabled() {
+            return "voice_disabled".to_string();
+        }
+        match action {
+            VoiceAction::Cec { action } => match self.hardware.av_cec(action).await {
+                Ok(_) => format!("cec:{action}"),
+                Err(e) => format!("cec_error:{e}"),
+            },
+            VoiceAction::Relay { relay, on } => match self.hardware.relay_set(*relay, *on).await {
+                Ok(_) => format!("relay:{relay}={}", *on as u8),
+                Err(e) => format!("relay_error:{e}"),
+            },
+            VoiceAction::LaunchApp { query } => match self.catalog.find_app(query).await {
+                Ok(Some(app)) => format!("launch:{}", app.url.unwrap_or(app.name)),
+                Ok(None) => format!("launch_unresolved:{query}"),
+                Err(e) => format!("launch_error:{e}"),
+            },
         }
     }
 }
@@ -356,6 +424,7 @@ mod tests {
                 settings: SettingsService::new(None),
                 dev: DevService::new(Platform::Stub),
                 hardware: HardwareService::new(DaemonClient::new("/nonexistent.sock")),
+                voice: VoiceService::new(true),
             },
             Platform::Stub,
         )
