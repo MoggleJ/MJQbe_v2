@@ -4,7 +4,7 @@ use crate::domain::{App, CatalogRepository, Category, CoreError};
 
 use super::validate_mode;
 
-/// Catalog use cases: list apps and categories for a given mode.
+/// Catalog use cases: list apps / categories / recent apps for a mode.
 ///
 /// `repo` is `None` when the core booted without a database — every call then
 /// fails with [`CoreError::DbUnavailable`] instead of panicking.
@@ -29,6 +29,17 @@ impl CatalogService {
     pub async fn list_categories(&self, mode: &str) -> Result<Vec<Category>, CoreError> {
         validate_mode(mode)?;
         self.repo()?.list_categories(mode).await
+    }
+
+    pub async fn recent_apps(
+        &self,
+        user_id: i32,
+        mode: &str,
+        limit: i64,
+    ) -> Result<Vec<App>, CoreError> {
+        validate_mode(mode)?;
+        let limit = limit.clamp(1, 50);
+        self.repo()?.recent_apps(user_id, mode, limit).await
     }
 
     fn repo(&self) -> Result<&Arc<dyn CatalogRepository>, CoreError> {
@@ -69,13 +80,34 @@ mod tests {
                 mode: mode.to_string(),
             }])
         }
+
+        async fn recent_apps(
+            &self,
+            _user_id: i32,
+            _mode: &str,
+            limit: i64,
+        ) -> Result<Vec<App>, CoreError> {
+            // Echo the (clamped) limit back through the id so the test can assert it.
+            Ok(vec![App {
+                id: limit as i32,
+                name: "recent".into(),
+                icon: None,
+                url: None,
+                category_id: None,
+                mode: "tv".into(),
+                is_web: false,
+                is_active: true,
+            }])
+        }
     }
 
     #[tokio::test]
     async fn rejects_unknown_mode() {
         let svc = CatalogService::new(Some(Arc::new(FakeRepo)));
-        let err = svc.list_apps("holodeck", None).await.unwrap_err();
-        assert!(matches!(err, CoreError::Internal(_)));
+        assert!(matches!(
+            svc.list_apps("holodeck", None).await.unwrap_err(),
+            CoreError::Internal(_)
+        ));
     }
 
     #[tokio::test]
@@ -91,9 +123,17 @@ mod tests {
     async fn passes_through_to_repo() {
         let svc = CatalogService::new(Some(Arc::new(FakeRepo)));
         let apps = svc.list_apps("desktop", None).await.unwrap();
-        assert_eq!(apps.len(), 1);
         assert_eq!(apps[0].name, "app-desktop");
-        let cats = svc.list_categories("tv").await.unwrap();
-        assert_eq!(cats[0].name, "Streaming");
+        assert_eq!(
+            svc.list_categories("tv").await.unwrap()[0].name,
+            "Streaming"
+        );
+    }
+
+    #[tokio::test]
+    async fn recent_clamps_limit() {
+        let svc = CatalogService::new(Some(Arc::new(FakeRepo)));
+        assert_eq!(svc.recent_apps(1, "tv", 999).await.unwrap()[0].id, 50);
+        assert_eq!(svc.recent_apps(1, "tv", 0).await.unwrap()[0].id, 1);
     }
 }

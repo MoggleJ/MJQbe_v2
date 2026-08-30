@@ -1,18 +1,23 @@
 import QtQuick
 import MJQbe
 
-// App tile: rounded 80x80 icon placeholder + truncated centered name.
-// Sprint 4 replaces the placeholder with real icons and adds favourites.
+// App tile: rounded icon (size from settings) + truncated centered name +
+// favourite star. Keyboard/remote focusable (TV navigation).
 Item {
     id: root
 
+    property int appId: 0
     property string appName: ""
     property string iconName: ""
     property string url: ""
-    signal activated()
+    property bool favorite: false
+    property int iconSize: 80          // 64 / 80 / 96 for small / medium / large
 
-    width: 100
-    height: 120
+    signal activated()
+    signal favoriteToggled()
+
+    width: iconSize + 26
+    height: iconSize + 40
 
     Column {
         anchors.fill: parent
@@ -20,20 +25,35 @@ Item {
 
         Rectangle {
             id: icon
-            width: 80
-            height: 80
+            width: root.iconSize
+            height: root.iconSize
             anchors.horizontalCenter: parent.horizontalCenter
-            radius: 18
+            radius: root.iconSize * 0.22
             color: ThemeManager.surface
-            border.color: focusRing.visible ? ThemeManager.accent : ThemeManager.border
-            border.width: focusRing.visible ? 2 : 1
+            border.color: root.activeFocus ? ThemeManager.accent : ThemeManager.border
+            border.width: root.activeFocus ? 2 : 1
 
             Text {
                 anchors.centerIn: parent
                 text: root.appName.length > 0 ? root.appName.charAt(0).toUpperCase() : "?"
                 color: ThemeManager.text
-                font.pixelSize: 30
+                font.pixelSize: root.iconSize * 0.38
                 font.bold: true
+            }
+
+            // Favourite star (top-right).
+            Rectangle {
+                width: 22; height: 22; radius: 11
+                anchors { top: parent.top; right: parent.right; margins: -6 }
+                color: root.favorite ? ThemeManager.accent : ThemeManager.bg
+                border.color: ThemeManager.border
+                Text {
+                    anchors.centerIn: parent
+                    text: "★"
+                    font.pixelSize: 12
+                    color: root.favorite ? "#ffffff" : ThemeManager.textDim
+                }
+                TapHandler { onTapped: root.favoriteToggled() }
             }
 
             TapHandler { onTapped: root.activated() }
@@ -50,8 +70,7 @@ Item {
         }
     }
 
-    // Keyboard / remote navigation (expanded in Sprint 4).
-    Rectangle { id: focusRing; visible: root.activeFocus; color: "transparent" }
     Keys.onReturnPressed: root.activated()
     Keys.onEnterPressed: root.activated()
+    Keys.onSpacePressed: root.favoriteToggled()
 }

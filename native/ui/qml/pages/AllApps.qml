@@ -1,62 +1,79 @@
 import QtQuick
+import QtQuick.Controls
 import MJQbe
 
-// Grid of apps for the current mode, fed by mjqbe-core (apps.list).
+// All apps for the current mode: category chips + live text filter + grid.
+// TV mode → wide cells + remote key navigation; Desktop → dense.
 Rectangle {
     id: page
     color: ThemeManager.bg
 
-    property string mode: "tv"
+    property var allApps: []
+    property var categories: []
+    property int categoryId: 0
+    property string query: ""
 
-    ListModel { id: appsModel }
+    readonly property var filtered: {
+        const q = query.toLowerCase();
+        return allApps.filter(a =>
+            (categoryId <= 0 || a.category_id === categoryId) &&
+            (q.length === 0 || a.name.toLowerCase().indexOf(q) !== -1));
+    }
+
+    function reload() {
+        Bridge.listApps(window.mode);
+        Bridge.listCategories(window.mode);
+    }
 
     Connections {
         target: Bridge
-        function onAppsReceived(mode, apps) {
-            if (mode !== page.mode)
-                return;
-            appsModel.clear();
-            for (let i = 0; i < apps.length; ++i)
-                appsModel.append(apps[i]);
-        }
+        function onAppsReceived(mode, apps) { if (mode === window.mode) page.allApps = apps; }
+        function onCategoriesReceived(mode, cats) { if (mode === window.mode) page.categories = cats; }
     }
+    Connections { target: window; function onModeChanged() { page.categoryId = 0; page.reload() } }
+    Component.onCompleted: reload()
 
-    Component.onCompleted: Bridge.listApps(page.mode)
-    onModeChanged: Bridge.listApps(page.mode)
+    Column {
+        anchors.fill: parent
+        anchors.margins: 24
+        spacing: 14
 
-    Text {
-        id: header
-        anchors { top: parent.top; left: parent.left; margins: 24 }
-        text: qsTr("All Apps") + " — " + page.mode
-        color: ThemeManager.text
-        font.pixelSize: 22
-        font.bold: true
-    }
-
-    GridView {
-        id: grid
-        anchors {
-            top: header.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
-            topMargin: 16; leftMargin: 24; rightMargin: 24; bottomMargin: 24
-        }
-        cellWidth: 106
-        cellHeight: 120
-        model: appsModel
-        clip: true
-
-        delegate: AppCard {
-            required property var model
-            appName: model.name
-            iconName: model.icon ? model.icon : ""
-            url: model.url ? model.url : ""
-            onActivated: if (url.length > 0) Qt.openUrlExternally(url)
+        Row {
+            width: parent.width
+            spacing: 16
+            Text {
+                text: qsTr("All Apps") + " — " + window.mode
+                color: ThemeManager.text
+                font.pixelSize: 22
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            TextField {
+                id: search
+                width: 260
+                placeholderText: qsTr("Filtrer…")
+                color: ThemeManager.text
+                onTextChanged: page.query = text
+            }
         }
 
-        Text {
-            anchors.centerIn: parent
-            visible: appsModel.count === 0
-            text: Bridge.connected ? qsTr("Aucune application.") : qsTr("Core hors-ligne.")
-            color: ThemeManager.textDim
+        CategoryChips {
+            width: parent.width
+            categories: page.categories
+            selectedId: page.categoryId
+            onSelected: (id) => page.categoryId = id
+        }
+
+        AppGrid {
+            width: parent.width
+            height: parent.height - y
+            mode: window.mode
+            iconSize: window.iconSize
+            favoriteIds: window.favoriteIds
+            model: page.filtered
+            emptyText: Bridge.connected ? qsTr("Aucune application.") : qsTr("Core hors-ligne.")
+            onAppActivated: (id, url, isWeb) => window.openApp(id, url, isWeb)
+            onFavoriteToggled: (id) => window.toggleFav(id)
         }
     }
 }

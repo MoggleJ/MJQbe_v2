@@ -8,7 +8,7 @@
 mod handler;
 mod protocol;
 
-pub use handler::Handler;
+pub use handler::{Handler, Services};
 pub use protocol::{ErrorBody, Request, Response};
 
 use std::path::Path;

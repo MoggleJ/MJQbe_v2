@@ -30,6 +30,8 @@ qt_add_qml_module(mjqbe-native
         qml/SidebarButton.qml
         qml/Clock.qml
         qml/AppCard.qml
+        qml/CategoryChips.qml
+        qml/AppGrid.qml
         qml/pages/Home.qml
         qml/pages/AllApps.qml
         qml/pages/Search.qml

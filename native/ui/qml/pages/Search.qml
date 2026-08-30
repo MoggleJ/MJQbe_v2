@@ -2,38 +2,24 @@ import QtQuick
 import QtQuick.Controls
 import MJQbe
 
-// Live filter over the current mode's apps.
+// Live search across the current mode's apps.
 Rectangle {
     id: page
     color: ThemeManager.bg
 
-    property string mode: "tv"
     property var allApps: []
-
-    ListModel { id: results }
+    property string query: ""
+    readonly property var results: {
+        const q = query.toLowerCase();
+        return q.length === 0 ? [] : allApps.filter(a => a.name.toLowerCase().indexOf(q) !== -1);
+    }
 
     Connections {
         target: Bridge
-        function onAppsReceived(mode, apps) {
-            if (mode !== page.mode)
-                return;
-            page.allApps = apps;
-            page.applyFilter(field.text);
-        }
+        function onAppsReceived(mode, apps) { if (mode === window.mode) page.allApps = apps; }
     }
-
-    Component.onCompleted: Bridge.listApps(page.mode)
-    onModeChanged: Bridge.listApps(page.mode)
-
-    function applyFilter(query) {
-        const needle = query.toLowerCase();
-        results.clear();
-        for (let i = 0; i < page.allApps.length; ++i) {
-            const a = page.allApps[i];
-            if (needle.length === 0 || a.name.toLowerCase().indexOf(needle) !== -1)
-                results.append(a);
-        }
-    }
+    Connections { target: window; function onModeChanged() { Bridge.listApps(window.mode) } }
+    Component.onCompleted: Bridge.listApps(window.mode)
 
     Column {
         anchors.fill: parent
@@ -45,23 +31,20 @@ Rectangle {
             width: parent.width
             placeholderText: qsTr("Rechercher une application…")
             color: ThemeManager.text
-            onTextChanged: page.applyFilter(text)
+            focus: true
+            onTextChanged: page.query = text
         }
 
-        GridView {
+        AppGrid {
             width: parent.width
             height: parent.height - field.height - 16
-            cellWidth: 106
-            cellHeight: 120
-            model: results
-            clip: true
-
-            delegate: AppCard {
-                required property var model
-                appName: model.name
-                url: model.url ? model.url : ""
-                onActivated: if (url.length > 0) Qt.openUrlExternally(url)
-            }
+            mode: window.mode
+            iconSize: window.iconSize
+            favoriteIds: window.favoriteIds
+            model: page.results
+            emptyText: page.query.length === 0 ? qsTr("Tapez pour rechercher.") : qsTr("Aucun résultat.")
+            onAppActivated: (id, url, isWeb) => window.openApp(id, url, isWeb)
+            onFavoriteToggled: (id) => window.toggleFav(id)
         }
     }
 }

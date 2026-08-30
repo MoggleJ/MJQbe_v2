@@ -4,12 +4,14 @@ use std::sync::Arc;
 
 use tracing_subscriber::EnvFilter;
 
-use mjqbe_core::application::{AuthService, CatalogService};
+use mjqbe_core::application::{AuthService, CatalogService, FavoritesService, SettingsService};
 use mjqbe_core::config::Config;
 use mjqbe_core::domain;
-use mjqbe_core::infrastructure::db::{Db, PgAuthRepository, PgCatalogRepository};
+use mjqbe_core::infrastructure::db::{
+    Db, PgAuthRepository, PgCatalogRepository, PgFavoritesRepository, PgSettingsRepository,
+};
 use mjqbe_core::infrastructure::hardware::Platform;
-use mjqbe_core::interface::ipc::{self, Handler};
+use mjqbe_core::interface::ipc::{self, Handler, Services};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -31,22 +33,28 @@ async fn main() -> anyhow::Result<()> {
             Some(db)
         }
         Err(e) => {
-            tracing::warn!(error = %e, "PostgreSQL unavailable — degraded mode (no catalog / no auth)");
+            tracing::warn!(error = %e, "PostgreSQL unavailable — degraded mode");
             None
         }
     };
 
-    let catalog_repo = db
-        .clone()
-        .map(|db| Arc::new(PgCatalogRepository::new(db)) as Arc<dyn domain::CatalogRepository>);
-    let auth_repo =
-        db.map(|db| Arc::new(PgAuthRepository::new(db)) as Arc<dyn domain::AuthRepository>);
+    let services = Services {
+        catalog: CatalogService::new(db.clone().map(|db| {
+            Arc::new(PgCatalogRepository::new(db)) as Arc<dyn domain::CatalogRepository>
+        })),
+        auth: AuthService::new(
+            db.clone()
+                .map(|db| Arc::new(PgAuthRepository::new(db)) as Arc<dyn domain::AuthRepository>),
+        ),
+        favorites: FavoritesService::new(db.clone().map(|db| {
+            Arc::new(PgFavoritesRepository::new(db)) as Arc<dyn domain::FavoritesRepository>
+        })),
+        settings: SettingsService::new(db.map(|db| {
+            Arc::new(PgSettingsRepository::new(db)) as Arc<dyn domain::SettingsRepository>
+        })),
+    };
 
-    let handler = Arc::new(Handler::new(
-        CatalogService::new(catalog_repo),
-        AuthService::new(auth_repo),
-        platform,
-    ));
+    let handler = Arc::new(Handler::new(services, platform));
 
     ipc::serve(&cfg.socket_path, handler).await
 }

@@ -44,3 +44,15 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `23:1x` — `git push origin dev` — _7649929..0e0750c._
 - `23:1x` — `git checkout -b sprint-03-actions && git push -u origin sprint-03-actions && git checkout dev` — _branche de sprint archivée, retour sur dev._
 - `23:1x` — `gh issue create` ×3 — _issues #137 (vérif Pi), #138 (réorg QML), #139 (smoke-test QML CI)._
+
+### Session — Sprint 4 (mode TV + Desktop natif)
+
+- `23:2x` — édition core : domain (Settings + traits favorites/settings), application (FavoritesService, SettingsService), infra/db (4 repos), interface/ipc (Services + 6 méthodes).
+- `23:2x` — `cargo test` — _26 unit + 1 intégration = 27 OK._ `cargo fmt` + `cargo clippy --all-targets -- -D warnings` — _clean._
+- `23:3x` — `docker compose -f docker-compose.yml -f docker-compose.native.yml up -d db` — _db sur 15432._
+- `23:3x` — `mjqbe-core` (background) + `python3 scratchpad/ipc_probe4.py /tmp/mjqbe-dev.sock` — _session/settings/favorites/recent E2E OK contre le seed._
+- `23:3x` — édition UI : `NativeBridge` (+méthodes/signaux), `AppCard` (favori+iconSize), `AppGrid` + `CategoryChips` (nouveaux), `Main` (état transverse), pages Home/AllApps/Search/Settings réécrites.
+- `23:3x` — `cmake --build native/ui/build` — _OK (qmlcachegen tous .qml)._
+- `23:3x` — création `native/ui/Dockerfile.smoketest` + `native/ui/smoketest.sh`.
+- `23:3x` — `bash native/ui/smoketest.sh /tmp/mjqbe-dev.sock` — _« VERDICT: OK — QML tree loaded »._
+- `23:35` — `pkill -x mjqbe-core` ; `docker rmi mjqbe-native-smoke` ; `docker compose ... prod.yml up -d db` — _nettoyage, db restaurée._

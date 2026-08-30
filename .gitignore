@@ -29,3 +29,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# smoke-test scratch output
+/.smoke-out/

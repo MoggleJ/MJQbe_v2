@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::domain::{AuthRepository, CoreError};
 
-/// Result of a successful local admin login.
+/// Result of a successful local admin login / the current native session.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthOutcome {
     pub user_id: i32,
@@ -22,7 +22,7 @@ impl AuthService {
     }
 
     pub async fn login(&self, username: &str, password: &str) -> Result<AuthOutcome, CoreError> {
-        let repo = self.repo.as_ref().ok_or(CoreError::DbUnavailable)?;
+        let repo = self.repo()?;
 
         let admin = repo
             .find_admin(username)
@@ -40,7 +40,6 @@ impl AuthService {
             return Err(CoreError::InvalidCredentials);
         }
 
-        // Best-effort — a failed timestamp update must not fail the login.
         let _ = repo.touch_last_login(admin.id).await;
 
         Ok(AuthOutcome {
@@ -48,6 +47,25 @@ impl AuthService {
             username: admin.username,
             role: admin.role,
         })
+    }
+
+    /// The implicit single-seat native user (lowest-id admin). Used to key
+    /// favourites / settings without an explicit login in dev.
+    pub async fn current_user(&self) -> Result<AuthOutcome, CoreError> {
+        let admin = self
+            .repo()?
+            .default_admin()
+            .await?
+            .ok_or(CoreError::NotFound)?;
+        Ok(AuthOutcome {
+            user_id: admin.id,
+            username: admin.username,
+            role: admin.role,
+        })
+    }
+
+    fn repo(&self) -> Result<&Arc<dyn AuthRepository>, CoreError> {
+        self.repo.as_ref().ok_or(CoreError::DbUnavailable)
     }
 }
 
@@ -66,6 +84,9 @@ mod tests {
         async fn find_admin(&self, username: &str) -> Result<Option<AdminRecord>, CoreError> {
             Ok(self.record.clone().filter(|r| r.username == username))
         }
+        async fn default_admin(&self) -> Result<Option<AdminRecord>, CoreError> {
+            Ok(self.record.clone())
+        }
         async fn touch_last_login(&self, _user_id: i32) -> Result<(), CoreError> {
             Ok(())
         }
@@ -80,36 +101,41 @@ mod tests {
         }
     }
 
+    fn service(pw: &str) -> AuthService {
+        AuthService::new(Some(Arc::new(FakeRepo {
+            record: Some(admin_with_password(pw)),
+        })))
+    }
+
     #[tokio::test]
     async fn accepts_valid_password() {
-        let svc = AuthService::new(Some(Arc::new(FakeRepo {
-            record: Some(admin_with_password("s3cret")),
-        })));
-        let out = svc.login("admin", "s3cret").await.unwrap();
+        let out = service("s3cret").login("admin", "s3cret").await.unwrap();
         assert_eq!(out.role, "admin");
         assert_eq!(out.user_id, 1);
     }
 
     #[tokio::test]
     async fn rejects_wrong_password() {
-        let svc = AuthService::new(Some(Arc::new(FakeRepo {
-            record: Some(admin_with_password("s3cret")),
-        })));
         assert!(matches!(
-            svc.login("admin", "nope").await.unwrap_err(),
+            service("s3cret").login("admin", "nope").await.unwrap_err(),
             CoreError::InvalidCredentials
         ));
     }
 
     #[tokio::test]
     async fn rejects_unknown_user() {
-        let svc = AuthService::new(Some(Arc::new(FakeRepo {
-            record: Some(admin_with_password("s3cret")),
-        })));
         assert!(matches!(
-            svc.login("ghost", "s3cret").await.unwrap_err(),
+            service("s3cret")
+                .login("ghost", "s3cret")
+                .await
+                .unwrap_err(),
             CoreError::InvalidCredentials
         ));
+    }
+
+    #[tokio::test]
+    async fn current_user_returns_default_admin() {
+        assert_eq!(service("x").current_user().await.unwrap().user_id, 1);
     }
 
     #[tokio::test]

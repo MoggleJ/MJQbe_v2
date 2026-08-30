@@ -4,6 +4,8 @@ mod entities;
 mod error;
 mod repository;
 
-pub use entities::{AdminRecord, App, Category};
+pub use entities::{
+    AdminRecord, App, Category, Settings, SettingsPatch, ICON_SIZES, LAYOUTS, THEMES, USER_MODES,
+};
 pub use error::CoreError;
-pub use repository::{AuthRepository, CatalogRepository};
+pub use repository::{AuthRepository, CatalogRepository, FavoritesRepository, SettingsRepository};

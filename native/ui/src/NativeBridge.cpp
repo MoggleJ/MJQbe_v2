@@ -40,6 +40,7 @@ void NativeBridge::onConnected()
     m_connected = true;
     emit connectedChanged();
     setStatus(QStringLiteral("connected"));
+    fetchSession(); // resolve the current user, then the UI can load prefs/favourites
 }
 
 void NativeBridge::onDisconnected()
@@ -82,7 +83,7 @@ void NativeBridge::setStatus(const QString &status)
     emit statusChanged();
 }
 
-QString NativeBridge::send(const QString &method, const QJsonObject &params, const QString &mode)
+QString NativeBridge::send(const QString &method, const QJsonObject &params, const QString &arg)
 {
     const QString id = QString::number(m_nextId++);
     if (m_socket.state() != QLocalSocket::ConnectedState) {
@@ -91,7 +92,7 @@ QString NativeBridge::send(const QString &method, const QJsonObject &params, con
         return id;
     }
 
-    m_pending.insert(id, Pending{method, mode});
+    m_pending.insert(id, Pending{method, arg});
 
     QJsonObject req;
     req.insert(QStringLiteral("id"), id);
@@ -131,12 +132,13 @@ void NativeBridge::dispatch(const QJsonObject &message)
     const QString id = message.value(QStringLiteral("id")).toString();
     const bool ok = message.value(QStringLiteral("ok")).toBool();
     const Pending pending = m_pending.take(id);
+    const QString &method = pending.method;
 
     if (!ok) {
         const QJsonObject error = message.value(QStringLiteral("error")).toObject();
         const QString code = error.value(QStringLiteral("code")).toString();
         const QString msg = error.value(QStringLiteral("message")).toString();
-        if (pending.method == QStringLiteral("auth.login"))
+        if (method == QStringLiteral("auth.login"))
             emit loginResult(false, QString(), msg);
         else
             emit coreError(code, msg);
@@ -145,14 +147,34 @@ void NativeBridge::dispatch(const QJsonObject &message)
 
     const QJsonValue data = message.value(QStringLiteral("data"));
 
-    if (pending.method == QStringLiteral("apps.list")) {
-        emit appsReceived(pending.mode, data.toArray().toVariantList());
-    } else if (pending.method == QStringLiteral("categories.list")) {
-        emit categoriesReceived(pending.mode, data.toArray().toVariantList());
-    } else if (pending.method == QStringLiteral("auth.login")) {
-        emit loginResult(true, data.toObject().value(QStringLiteral("role")).toString(), QString());
+    if (method == QStringLiteral("apps.list")) {
+        emit appsReceived(pending.arg, data.toArray().toVariantList());
+    } else if (method == QStringLiteral("apps.recent")) {
+        emit recentReceived(pending.arg, data.toArray().toVariantList());
+    } else if (method == QStringLiteral("categories.list")) {
+        emit categoriesReceived(pending.arg, data.toArray().toVariantList());
+    } else if (method == QStringLiteral("favorites.list")) {
+        emit favoritesReceived(data.toArray().toVariantList());
+    } else if (method == QStringLiteral("favorites.toggle")) {
+        const QJsonObject o = data.toObject();
+        emit favoriteToggled(o.value(QStringLiteral("app_id")).toInt(),
+                             o.value(QStringLiteral("favorited")).toBool());
+    } else if (method == QStringLiteral("settings.get")
+               || method == QStringLiteral("settings.update")) {
+        emit settingsReceived(data.toObject().toVariantMap());
+    } else if (method == QStringLiteral("session.current")) {
+        const QJsonObject o = data.toObject();
+        m_userId = o.value(QStringLiteral("user_id")).toInt(m_userId);
+        m_userName = o.value(QStringLiteral("username")).toString(m_userName);
+        emit sessionChanged();
+    } else if (method == QStringLiteral("auth.login")) {
+        const QJsonObject o = data.toObject();
+        m_userId = o.value(QStringLiteral("user_id")).toInt(m_userId);
+        m_userName = o.value(QStringLiteral("username")).toString(m_userName);
+        emit sessionChanged();
+        emit loginResult(true, o.value(QStringLiteral("role")).toString(), QString());
     }
-    // ping / health: nothing to surface for now.
+    // ping / health: nothing to surface.
 }
 
 void NativeBridge::ping()
@@ -160,14 +182,51 @@ void NativeBridge::ping()
     send(QStringLiteral("ping"), {});
 }
 
-void NativeBridge::listApps(const QString &mode)
+void NativeBridge::fetchSession()
 {
-    send(QStringLiteral("apps.list"), QJsonObject{{QStringLiteral("mode"), mode}}, mode);
+    send(QStringLiteral("session.current"), {});
+}
+
+void NativeBridge::listApps(const QString &mode, int categoryId)
+{
+    QJsonObject p{{QStringLiteral("mode"), mode}};
+    if (categoryId > 0)
+        p.insert(QStringLiteral("category_id"), categoryId);
+    send(QStringLiteral("apps.list"), p, mode);
+}
+
+void NativeBridge::listRecent(const QString &mode)
+{
+    send(QStringLiteral("apps.recent"),
+         QJsonObject{{QStringLiteral("user_id"), m_userId}, {QStringLiteral("mode"), mode}}, mode);
 }
 
 void NativeBridge::listCategories(const QString &mode)
 {
     send(QStringLiteral("categories.list"), QJsonObject{{QStringLiteral("mode"), mode}}, mode);
+}
+
+void NativeBridge::listFavorites()
+{
+    send(QStringLiteral("favorites.list"), QJsonObject{{QStringLiteral("user_id"), m_userId}});
+}
+
+void NativeBridge::toggleFavorite(int appId)
+{
+    send(QStringLiteral("favorites.toggle"),
+         QJsonObject{{QStringLiteral("user_id"), m_userId}, {QStringLiteral("app_id"), appId}});
+}
+
+void NativeBridge::getSettings()
+{
+    send(QStringLiteral("settings.get"), QJsonObject{{QStringLiteral("user_id"), m_userId}});
+}
+
+void NativeBridge::updateSettings(const QVariantMap &patch)
+{
+    QJsonObject p = QJsonObject::fromVariantMap(patch);
+    p.insert(QStringLiteral("user_id"), m_userId);
+    send(QStringLiteral("settings.update"), p);
 }
 
 void NativeBridge::login(const QString &username, const QString &password)

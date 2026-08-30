@@ -73,24 +73,25 @@ Workflow de chaque sprint : voir `agents/sprint-workflow.md`.
 
 ---
 
-## Sprint 4 — App Native — Mode TV + Desktop [NATIVE]
+## Sprint 4 — App Native — Mode TV + Desktop [NATIVE] ✓
 
 **Objectif :** Les deux modes de consommation fonctionnels dans l'app native.
 
 ### Tâches
-- [ ] Implémenter `AppCard.qml` (icône arrondie 80×80px + nom tronqué centré)
-- [ ] Implémenter `Home.qml` (apps récentes / favorites via Rust IPC)
-- [ ] Implémenter `AllApps.qml` : `GridView` QML (cellWidth 106, cellHeight 120), chips catégories, filtre temps réel
-- [ ] Mode TV : colonnes larges, navigation `KeyNavigation` QML (télécommande)
-- [ ] Mode Desktop : layout dense, catégories groupées
-- [ ] Implémenter `Search.qml` : filtre live via Rust IPC
-- [ ] Favoris : toggle côté Rust, persisté PostgreSQL
-- [ ] `Settings.qml` : sélecteur thème (10 options), layout, icon_size
-- [ ] Ouvrir les apps : `Qt.openUrlExternally()` ou `QWebEngineView`
-- [ ] Couche Rust : use cases favorites, settings, search
+- [x] Implémenter `AppCard.qml` (icône arrondie, taille depuis settings, nom tronqué centré, étoile favori, focus clavier)
+- [x] Implémenter `Home.qml` (favoris + récents via IPC `favorites.list` / `apps.recent`)
+- [x] Implémenter `AllApps.qml` : `AppGrid` (GridView), `CategoryChips`, filtre texte temps réel
+- [x] Mode TV : cellules larges, `keyNavigationWraps` + `Keys` (télécommande)
+- [x] Mode Desktop : cellules denses (`AppGrid.mode`)
+- [x] Implémenter `Search.qml` : filtre live via IPC
+- [x] Favoris : `favorites.toggle` côté Rust, persisté PostgreSQL — vérifié E2E
+- [x] `Settings.qml` : thème (10) + layout (grid/list) + icon_size (small/medium/large), persistés (`settings.update`)
+- [x] Ouvrir les apps : `Qt.openUrlExternally()` (embedded `QWebEngineView` → sprint ultérieur)
+- [x] Couche Rust : use cases `FavoritesService`, `SettingsService`, recent + validation enum
 
 ### Livrable de vérification
 Mode TV : grille apps visible, navigation clavier/télécommande. Mode Desktop : layout dense. Favoris persistés.
+**Statut :** build Rust+Qt OK ; **27 tests** core (clippy clean) ; E2E contre PostgreSQL : `session.current`, `settings.get/update` (+ validation), `favorites.toggle/list` OK ; smoke-test Docker offscreen → arbre QML chargé sans erreur. Nav télécommande sur écran réel + `QWebEngineView` : différés. Voir `tracking/sprint-4.md`.
 
 ---
 

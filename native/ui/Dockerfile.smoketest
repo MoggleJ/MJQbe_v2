@@ -1,0 +1,26 @@
+# Smoke-test image for the native UI (NOT a deployment artefact — the native
+# app ships as a systemd process, CDC §10.2). Debian Bookworm == same Qt 6.4
+# baseline as the Raspberry Pi target.
+#
+#   docker build -f native/ui/Dockerfile.smoketest -t mjqbe-native-smoke .
+#   docker run -d -v "$PWD/.smoke-out":/out mjqbe-native-smoke \
+#     sh -c '/build/mjqbe-native --windowed >/out/ui.log 2>&1 & P=$!; sleep 5; \
+#            kill -0 $P && echo OK>>/out/ui.log || echo "EXIT $?">>/out/ui.log'
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential cmake ninja-build ca-certificates \
+      qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools \
+      libgl1-mesa-dev \
+      qml6-module-qtquick qml6-module-qtquick-window \
+      qml6-module-qtquick-controls qml6-module-qtquick-templates \
+      qml6-module-qtquick-layouts qml6-module-qtqml-workerscript \
+      libqt6sql6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY native/ui /src/native/ui
+RUN cmake -S native/ui -B /build -G Ninja -DCMAKE_BUILD_TYPE=Debug && cmake --build /build
+
+ENV QT_QPA_PLATFORM=offscreen
+CMD ["/build/mjqbe-native", "--windowed"]

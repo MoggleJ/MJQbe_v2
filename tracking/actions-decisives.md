@@ -65,3 +65,23 @@ Chaque entrée est horodatée.
 | `docs/plan-implementation.md` Sprint 3 (l.53-73) | `[ ]`→`[x]` sur 11 tâches, titre `+✓`, bloc statut ajouté | sprint terminé |
 | `.github/workflows/native-build.yml` (l.65-70) | paquets apt : `+qt6-base-dev-tools +qt6-declarative-dev-tools +ninja-build +libgl1-mesa-dev` | `qt_add_qml_module` a besoin des dev-tools pour builder en CI |
 | `problemes.md` | +P8, P9, P10, P11 | problèmes rencontrés pendant le sprint |
+
+---
+
+## 2026-08-30 — Sprint 4 (mode TV + Desktop natif)
+
+### ~23:20 CEST — Extension de `native/core` (schéma IPC élargi)
+- **Type** : nouveau code + nouvelles méthodes IPC (compat ascendante : anciennes méthodes inchangées).
+- **Fichiers** : +`application/favorites.rs`, +`application/settings.rs`, +`infrastructure/db/favorites_repo.rs`, +`infrastructure/db/settings_repo.rs` ; modifiés : `domain/{entities,mod,repository}.rs`, `application/{mod,auth,catalog}.rs`, `infrastructure/db/{mod,auth_repo,catalog_repo}.rs`, `interface/ipc/{mod,handler}.rs`, `main.rs`, `tests/ipc_roundtrip.rs`.
+- **Nouvelles méthodes** : `session.current`, `apps.recent`, `favorites.list`, `favorites.toggle`, `settings.get`, `settings.update`.
+- **Raison** : tâches Sprint 4 (favoris + settings persistés + récents).
+
+### ~23:30 CEST — Extension de `native/ui`
+- **Fichiers** : +`qml/AppGrid.qml`, +`qml/CategoryChips.qml`, +`native/ui/Dockerfile.smoketest`, +`native/ui/smoketest.sh` ; modifiés : `CMakeLists.txt`, `src/NativeBridge.{h,cpp}`, `qml/{Main,AppCard}.qml`, `qml/pages/{Home,AllApps,Search,Settings}.qml`.
+- **Note** : `Dockerfile.smoketest` = outil de test QML offscreen, **pas** un artefact de déploiement (natif = systemd, CDC §10.2).
+
+### Fichiers hors `native/` / `docs`
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 4 | 10 tâches `[x]`, bloc statut | sprint terminé |
+| `.gitignore` | +`/.smoke-out/` | sortie transitoire du smoke-test |

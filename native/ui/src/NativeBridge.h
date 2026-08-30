@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 // Client side of the native IPC channel: a QLocalSocket connected to the
 // mjqbe-core Unix socket, speaking newline-delimited JSON.
@@ -20,25 +21,40 @@ class NativeBridge : public QObject
     Q_OBJECT
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
+    Q_PROPERTY(int userId READ userId NOTIFY sessionChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY sessionChanged)
 
 public:
     explicit NativeBridge(QObject *parent = nullptr);
 
     bool connected() const { return m_connected; }
     QString status() const { return m_status; }
+    int userId() const { return m_userId; }
+    QString userName() const { return m_userName; }
     void setSocketPath(const QString &path) { m_socketPath = path; }
 
     Q_INVOKABLE void connectToCore();
     Q_INVOKABLE void ping();
-    Q_INVOKABLE void listApps(const QString &mode);
+    Q_INVOKABLE void fetchSession();
+    Q_INVOKABLE void listApps(const QString &mode, int categoryId = -1);
+    Q_INVOKABLE void listRecent(const QString &mode);
     Q_INVOKABLE void listCategories(const QString &mode);
+    Q_INVOKABLE void listFavorites();
+    Q_INVOKABLE void toggleFavorite(int appId);
+    Q_INVOKABLE void getSettings();
+    Q_INVOKABLE void updateSettings(const QVariantMap &patch);
     Q_INVOKABLE void login(const QString &username, const QString &password);
 
 signals:
     void connectedChanged();
     void statusChanged();
+    void sessionChanged();
     void appsReceived(const QString &mode, const QVariantList &apps);
+    void recentReceived(const QString &mode, const QVariantList &apps);
     void categoriesReceived(const QString &mode, const QVariantList &categories);
+    void favoritesReceived(const QVariantList &appIds);
+    void favoriteToggled(int appId, bool favorited);
+    void settingsReceived(const QVariantMap &settings);
     void loginResult(bool ok, const QString &role, const QString &error);
     void coreError(const QString &code, const QString &message);
 
@@ -52,18 +68,20 @@ private:
     struct Pending
     {
         QString method;
-        QString mode; // echoed back on list results
+        QString arg; // echoed context (mode, ...)
     };
 
     void setStatus(const QString &status);
     void scheduleReconnect();
-    QString send(const QString &method, const QJsonObject &params, const QString &mode = QString());
+    QString send(const QString &method, const QJsonObject &params, const QString &arg = QString());
     void dispatch(const QJsonObject &message);
 
     QLocalSocket m_socket;
     QString m_socketPath;
     QString m_status{QStringLiteral("disconnected")};
     bool m_connected{false};
+    int m_userId{1}; // default to admin so favourites work without explicit login in dev
+    QString m_userName{QStringLiteral("admin")};
     QByteArray m_buffer;
     quint64 m_nextId{1};
     QHash<QString, Pending> m_pending;

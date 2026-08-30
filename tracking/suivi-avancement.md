@@ -12,7 +12,8 @@ Chaque entrée est horodatée.
 | 1 — Scaffolding & DevOps | ✅ terminé | branche `sprint-01-actions` |
 | 2 — Base de données | ✅ terminé | branche `sprint-02-actions` ; tests pytest **manquants** (2 issues ouvertes) |
 | 3 — Native scaffolding C++/Qt6 + Rust | ✅ terminé | branche `sprint-03-actions` ; voir `tracking/sprint-3.md` |
-| 4 → 9 — Native (TV/Desktop/Dev/UX/daemon/AV/voix) | ⛔ non démarré | dépendances matériel Pi pour 5→9 |
+| 4 — Native mode TV + Desktop | ✅ terminé | branche `sprint-04-actions` ; voir `tracking/sprint-4.md` |
+| 5 → 9 — Native (Dev/UX/daemon/AV/voix) | ⛔ non démarré | dépendances matériel Pi pour 5→9 |
 | 10 → 15 — Web (auth/API/frontend) | ⛔ non démarré | testable en local via Docker |
 | 16 — CLI complète | ⛔ non démarré | |
 | 17 — Sécurité & déploiement | ⛔ non démarré | CI partiellement en place |
@@ -60,3 +61,13 @@ Chaque entrée est horodatée.
   8. `docker run` stdout inaccessible en pipe (snap AppArmor). **P9**. → capture via fichier bind-monté. 3 tentatives.
 - **État machine après sprint** : stack Docker restaurée (db en config standard), artefacts de test supprimés, core arrêté, Rust laissé installé (`~/.cargo`).
 - **Prochaine étape** : commit `sprint-3: ...`, push `dev` + `sprint-03-actions`, issues GitHub (vérif Pi, réorg QML, smoke-test QML en CI). Puis Sprint 4.
+
+### 2026-08-30 23:36 CEST — Sprint 4 : mode TV + Desktop natif
+- **Fait** : core (favorites/settings/recent/session + validation), UI (AppCard favori+iconSize, AppGrid, CategoryChips, Home favoris/récents, AllApps chips+filtre, Search, Settings 3 réglages persistés), outillage smoke-test Docker.
+- **Tests** : 27 core (clippy clean) ; E2E DB (session/settings/favorites/recent) ; smoke-test Docker offscreen → QML OK.
+- **Erreurs / tentatives** :
+  1. Délégués `AppGrid` : `model` (ListModel) vs `modelData` (JS array). Choix = JS array + `modelData` partout. 1 correction.
+  2. `import QtQuick.Window` déjà retiré au Sprint 3 → RAS.
+- **Différé** : nav télécommande sur écran réel (#137), `QWebEngineView` embarqué, catégories groupées Desktop, réorg QML (#138).
+- **État machine** : stack restaurée (db prod), core arrêté, image smoke supprimée.
+- **Prochaine étape** : commit `sprint-04:`, push dev + `sprint-04-actions`, issues, puis Sprint 5 (mode Dev natif — monitoring système).

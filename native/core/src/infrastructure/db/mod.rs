@@ -3,9 +3,13 @@
 
 mod auth_repo;
 mod catalog_repo;
+mod favorites_repo;
+mod settings_repo;
 
 pub use auth_repo::PgAuthRepository;
 pub use catalog_repo::PgCatalogRepository;
+pub use favorites_repo::PgFavoritesRepository;
+pub use settings_repo::PgSettingsRepository;
 
 use std::time::Duration;
 

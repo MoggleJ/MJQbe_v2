@@ -3,15 +3,30 @@
 
 mod auth;
 mod catalog;
+mod favorites;
+mod settings;
 
 pub use auth::{AuthOutcome, AuthService};
 pub use catalog::CatalogService;
+pub use favorites::FavoritesService;
+pub use settings::SettingsService;
 
-pub(crate) fn validate_mode(mode: &str) -> Result<(), crate::domain::CoreError> {
+use crate::domain::CoreError;
+
+pub(crate) fn validate_mode(mode: &str) -> Result<(), CoreError> {
     match mode {
         "tv" | "desktop" | "dev" => Ok(()),
-        other => Err(crate::domain::CoreError::Internal(format!(
-            "invalid mode: {other}"
-        ))),
+        other => Err(CoreError::Internal(format!("invalid mode: {other}"))),
+    }
+}
+
+/// Rejects a value that is not in `allowed`.
+pub(crate) fn validate_enum(field: &str, value: &str, allowed: &[&str]) -> Result<(), CoreError> {
+    if allowed.contains(&value) {
+        Ok(())
+    } else {
+        Err(CoreError::Internal(format!(
+            "invalid {field}: {value} (expected one of {allowed:?})"
+        )))
     }
 }
