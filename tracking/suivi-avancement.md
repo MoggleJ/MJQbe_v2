@@ -11,7 +11,7 @@ Chaque entrée est horodatée.
 |---|---|---|
 | 1 — Scaffolding & DevOps | ✅ terminé | branche `sprint-01-actions` |
 | 2 — Base de données | ✅ terminé | branche `sprint-02-actions` ; tests pytest **manquants** (2 issues ouvertes) |
-| 3 — Native scaffolding C++/Qt6 + Rust | ⏳ à démarrer | dossier `native/` inexistant |
+| 3 — Native scaffolding C++/Qt6 + Rust | ✅ terminé | branche `sprint-03-actions` ; voir `tracking/sprint-3.md` |
 | 4 → 9 — Native (TV/Desktop/Dev/UX/daemon/AV/voix) | ⛔ non démarré | dépendances matériel Pi pour 5→9 |
 | 10 → 15 — Web (auth/API/frontend) | ⛔ non démarré | testable en local via Docker |
 | 16 — CLI complète | ⛔ non démarré | |
@@ -36,4 +36,27 @@ Chaque entrée est horodatée.
 - **Action** : relecture complète des specs (CDC, data-model, plan, problemes, AGENTS, sprint-workflow) + inspection du code réel.
 - **Fichiers créés** : `tracking/README.md`, `tracking/journal-commandes.md`, `tracking/suivi-avancement.md`, `tracking/actions-decisives.md`.
 - **Erreurs** : aucune.
-- **Prochaine étape** : commit des modifs non commitées, puis clarification (accès Pi + ordre native/web) avant démarrage Sprint 3.
+
+### 2026-08-30 22:45 CEST — Décisions utilisateur
+- Ordre : **native-first** (Sprint 3 maintenant). Pas de Pi pour l'instant → code + stubs, livrables matériels « à vérifier sur Pi ».
+- Autorisations : commit/push sans demander ; commandes root si besoin projet et sans impact décisif ; **Docker obligatoire pour les tests de fonctionnement** ; tout changement sur environnement/interface **isolé**.
+- Message de commit : `sprint-XX: ...` **sans** trailer Co-Authored-By.
+
+### 2026-08-30 23:15 CEST — Sprint 3 : app native (scaffolding C++/Qt6 + Rust)
+- **Fait** : crate `native/core` (Rust, Clean Archi, IPC socket Unix JSON, sqlx, bcrypt) ; `native/ui` (Qt6/QML : Main + Sidebar + ThemeManager 10 thèmes + 5 pages + NativeBridge) ; 2 units systemd ; `docker-compose.native.yml` ; fix CDC §2.1 ; CI native-build élargie.
+- **Setup** : Rust 1.98 installé (rustup, `~/.cargo`).
+- **Tests** :
+  - `cargo test` → **18/18** (17 unit + 1 intégration socket), `clippy -D warnings` clean, `cargo fmt` clean.
+  - Core E2E contre PostgreSQL (seed) via `docker-compose.native.yml` (port 15432) : `apps.list`, `categories.list`, `auth.login` OK.
+  - UI : smoke-test **Docker** `debian:bookworm` + Qt6, `QT_QPA_PLATFORM=offscreen` → arbre QML chargé sans erreur, app stable 5 s.
+- **Erreurs rencontrées / tentatives** :
+  1. `sessionmaker` (Sprint 2 leftover) — corrigé avant Sprint 3.
+  2. `tokio-uds` demandé par le plan → obsolète → `tokio` feature `net`. **P8**. 1 tentative.
+  3. `docker compose ... native.yml up db` → bind 5432 impossible (PostgreSQL système). **P10**. 2 tentatives (5432 → 15432).
+  4. DB auth failed : mot de passe hardcodé ≠ `.env`. Corrigé (lecture `.env`). 2 tentatives.
+  5. Sonde IPC `connect('')` : `&` bash applique au groupe AND-list entier → var `$SOCK` perdue. Résolu via `run_in_background` + chemin littéral. 3 tentatives.
+  6. `pkill -f target/debug/mjqbe-core` tuait le shell lanceur (self-match). → `pkill -x mjqbe-core`. 2 tentatives.
+  7. QML `QtQuick.Window` / `QtQuick.Templates` absents du poste + pas de sudo. **P11**. → retrait import Window + smoke-test dans Docker. 3 tentatives.
+  8. `docker run` stdout inaccessible en pipe (snap AppArmor). **P9**. → capture via fichier bind-monté. 3 tentatives.
+- **État machine après sprint** : stack Docker restaurée (db en config standard), artefacts de test supprimés, core arrêté, Rust laissé installé (`~/.cargo`).
+- **Prochaine étape** : commit `sprint-3: ...`, push `dev` + `sprint-03-actions`, issues GitHub (vérif Pi, réorg QML, smoke-test QML en CI). Puis Sprint 4.

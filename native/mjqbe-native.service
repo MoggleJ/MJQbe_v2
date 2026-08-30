@@ -1,0 +1,23 @@
+[Unit]
+Description=MJQbe native UI (Qt6/QML hub)
+Documentation=https://github.com/MoggleJ/MJQbe_v2
+After=mjqbe-core.service graphical.target
+Wants=mjqbe-core.service
+Requires=graphical.target
+
+[Service]
+Type=simple
+User=mjqbe
+# Needs a graphical session bus / seat.
+PAMName=login
+Environment=MJQBE_NATIVE_SOCKET=/run/mjqbe/native.sock
+# Prefer Wayland on the Pi, fall back to X11.
+Environment=QT_QPA_PLATFORM=wayland;xcb
+# Wait until the core socket exists before starting the UI.
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do [ -S "$MJQBE_NATIVE_SOCKET" ] && exit 0; sleep 0.5; done; exit 0'
+ExecStart=/opt/mjqbe/bin/mjqbe-native
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

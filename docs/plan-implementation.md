@@ -50,25 +50,26 @@ Workflow de chaque sprint : voir `agents/sprint-workflow.md`.
 
 ---
 
-## Sprint 3 — App Native — Scaffolding C++/Qt6 + Rust [NATIVE]
+## Sprint 3 — App Native — Scaffolding C++/Qt6 + Rust [NATIVE] ✓
 
 **Objectif :** Poser la structure de l'application native. Après ce sprint, la fenêtre s'ouvre sur le Pi.
 
 ### Tâches
-- [ ] Créer `native/ui/` : projet Qt6/QML avec `CMakeLists.txt`
-- [ ] Créer `native/core/` : crate Rust avec `Cargo.toml` (`sqlx`, `tokio`, `serde`, `tokio-uds`)
-- [ ] Définir le protocole IPC : C++ client ↔ Rust serveur via socket Unix JSON (`/run/mjqbe/native.sock`)
-- [ ] Fenêtre principale QML : plein écran, sidebar 250px + zone contenu
-- [ ] Implémenter `ThemeManager.qml` (10 thèmes via propriétés Qt, palette amoled par défaut)
-- [ ] Implémenter `Sidebar.qml` : titre dynamique, menu, heure (`Timer { interval: 1000 }`)
-- [ ] Navigation entre pages QML (`StackView` ou `Loader`)
-- [ ] Couche Rust `db/` : connexion PostgreSQL via `sqlx`, requêtes apps/catégories
-- [ ] Authentification locale admin (bcrypt Rust, hash stocké en base)
-- [ ] Stub mode hors Pi : désactive GPIO, utilise DB locale
-- [ ] Créer `mjqbe-native.service` (systemd unit)
+- [x] Créer `native/ui/` : projet Qt6/QML avec `CMakeLists.txt`
+- [x] Créer `native/core/` : crate Rust avec `Cargo.toml` (`sqlx`, `tokio`, `serde`, ~~`tokio-uds`~~ → `tokio` feature `net`, tokio-uds obsolète)
+- [x] Définir le protocole IPC : C++ client ↔ Rust serveur via socket Unix JSON (`/run/mjqbe/native.sock`) — JSON lignes, méthodes `ping`/`health`/`apps.list`/`categories.list`/`auth.login`
+- [x] Fenêtre principale QML : plein écran (`--windowed` en dev), sidebar 250px + `StackView`
+- [x] Implémenter `ThemeManager.qml` (singleton, 10 thèmes, palette amoled par défaut)
+- [x] Implémenter `Sidebar.qml` : titre dynamique, menu, heure (`Clock.qml`, `Timer` 1 s)
+- [x] Navigation entre pages QML (`StackView`)
+- [x] Couche Rust `db/` : connexion PostgreSQL via `sqlx` (requêtes runtime), apps/catégories — vérifié E2E sur le seed
+- [x] Authentification locale admin (bcrypt Rust, hash en base) — vérifié E2E (`admin`/`admin` → role admin)
+- [x] Stub mode hors Pi : `Platform::detect` (`MJQBE_STUB=1` / device-tree), façade GPIO → `HardwareUnavailable`, DB locale
+- [x] Créer `mjqbe-native.service` (+ `mjqbe-core.service`, l'IPC est un process séparé)
 
 ### Livrable de vérification
 `cmake --build && ./mjqbe-native` → fenêtre s'ouvre, sidebar visible, navigation fonctionne.
+**Statut :** build OK (Rust + Qt) ; smoke-test Docker `QT_QPA_PLATFORM=offscreen` → arbre QML chargé sans erreur, app stable ; core testé E2E contre PostgreSQL du seed (18 tests). Vérification sur écran réel / Pi : différée (pas de Pi). Voir `tracking/sprint-3.md`.
 
 ---
 

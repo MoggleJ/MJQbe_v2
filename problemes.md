@@ -121,3 +121,53 @@ CMD uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT:-4848}
 **Solution :** Utiliser `npm install` à la place de `npm ci` dans `frontend/Dockerfile` et `frontend/Dockerfile.dev`.
 
 **Statut :** Résolu
+
+---
+
+## P8 — Sprint 3 : `tokio-uds` n'existe plus
+
+**Symptôme :** le plan demande la crate `tokio-uds` pour le socket Unix du core Rust.
+
+**Cause :** `tokio-uds` est obsolète depuis Tokio 0.2 — les `UnixListener` / `UnixStream` sont intégrés à `tokio` via la feature `net`.
+
+**Solution :** `tokio = { version = "1", features = ["net", ...] }`. Le plan a été annoté.
+
+**Statut :** Résolu
+
+---
+
+## P9 — Docker (snap) : `docker run` ne renvoie pas stdout dans un pipe
+
+**Symptôme :** `docker run --rm <image> echo hello` → exit 1, aucune sortie. `docker logs` vide. Mais `docker build`, `docker compose up`, `docker ps`, et `docker run <image> true` (sans sortie) fonctionnent.
+
+**Cause :** confinement AppArmor du snap Docker : le conteneur ne peut pas écrire sur le pipe stdout fourni par l'outil d'exécution non-TTY → SIGPIPE → exit 1.
+
+**Solution (tests de fonctionnement) :** rediriger la sortie du conteneur vers un fichier sur un volume bind-monté (`docker run -d -v "$PWD/out":/out ... sh -c 'exec >/out/log 2>&1; ...'`), puis lire le fichier côté hôte.
+
+**Statut :** Contourné (limite d'environnement, pas un bug projet)
+
+---
+
+## P10 — Port 5432 déjà pris sur l'hôte (PostgreSQL système)
+
+**Symptôme :** `docker compose -f ... -f docker-compose.native.yml up -d db` → `failed to bind host port 127.0.0.1:5432: address already in use`. Le recreate échoue et laisse `mjqbe_v2-db-1` en état `Created`.
+
+**Cause :** un PostgreSQL système écoute déjà sur `127.0.0.1:5432`. L'app native (processus local hors Docker) a besoin d'atteindre la base du conteneur.
+
+**Solution :** `docker-compose.native.yml` publie `db` sur `127.0.0.1:${MJQBE_DB_HOST_PORT:-15432}:5432` (loopback uniquement, port 15432 par défaut). Récupération après échec : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d db`.
+
+**Statut :** Résolu
+
+---
+
+## P11 — Qt 6 : `QtQuick.Templates` / `QtQuick.Window` absents du poste de dev
+
+**Symptôme :** `./mjqbe-native` → `module "QtQuick.Templates" plugin "qtquicktemplates2plugin" not found` ou `module "QtQuick.Window" is not installed`. Le **build** (`cmake --build`) réussit ; seul le **run** échoue.
+
+**Cause :** poste de dev sans `qml6-module-qtquick-templates` / `qml6-module-qtquick-window` (runtime QML), et `sudo` non disponible sans mot de passe en session non-interactive.
+
+**Solutions appliquées :**
+1. Retrait de `import QtQuick.Window` dans `Main.qml` — plein écran via `showFullScreen()` / `showNormal()` en `Component.onCompleted` (méthodes, pas d'enum → pas d'import).
+2. `QtQuick.Templates` reste requis par `QtQuick.Controls` : smoke-test lancé dans une image Docker `debian:bookworm` (même base Qt 6.4 que le Pi) avec tous les `qml6-module-*` → arbre QML chargé sans erreur.
+
+**Statut :** Résolu (dev = via Docker ; sur le Pi, les paquets `qml6-module-qtquick-*` sont à installer — voir `docs/deploiement.md` à venir, Sprint 17)

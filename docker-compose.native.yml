@@ -1,0 +1,16 @@
+# Override pour le développement de l'app native hors-Pi.
+#
+# L'app native (native/core) tourne comme processus local, pas dans Docker.
+# Elle a besoin d'atteindre PostgreSQL : cet override publie le port de `db`
+# sur la loopback de l'hôte uniquement (jamais exposé sur le réseau).
+#
+# Port hôte = 15432 par défaut (5432 est souvent déjà pris par un PostgreSQL
+# système). Surchargeable via MJQBE_DB_HOST_PORT.
+#
+# Usage :
+#   docker compose -f docker-compose.yml -f docker-compose.native.yml up -d db
+#   DATABASE_URL='postgres://mjqbe:mjqbe@localhost:15432/mjqbe?sslmode=disable'
+services:
+  db:
+    ports:
+      - "127.0.0.1:${MJQBE_DB_HOST_PORT:-15432}:5432"

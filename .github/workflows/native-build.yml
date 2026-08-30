@@ -66,7 +66,11 @@ jobs:
         if: steps.check.outputs.exists == 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake qt6-base-dev qt6-declarative-dev
+          sudo apt-get install -y \
+            cmake ninja-build \
+            qt6-base-dev qt6-base-dev-tools \
+            qt6-declarative-dev qt6-declarative-dev-tools \
+            libgl1-mesa-dev
 
       - name: CMake configure
         if: steps.check.outputs.exists == 'true'

@@ -16,13 +16,14 @@ MJQbe est un hub applicatif embarqué sur Raspberry Pi 4. Il centralise l'accès
 
 MJQbe v2 est composé de **deux interfaces indépendantes** qui partagent la même base de données PostgreSQL et le même daemon C.
 
-### 2.1 Application native (PySide6 / QML)
+### 2.1 Application native (C++ / Qt6 / QML + Rust)
 
 - Tourne **directement sur le Pi** comme application de bureau (Wayland/X11)
-- Lancée au démarrage via systemd
+- Lancée au démarrage via systemd (`mjqbe-core.service` + `mjqbe-native.service`)
 - Accessible **uniquement en local** (écran connecté au Pi)
 - Couvre les **3 modes** : TV, Desktop, Dev
-- Backend Python direct : SQLAlchemy + socket Unix vers le daemon C
+- UI en C++ + Qt6/QML ; logique métier et accès données en Rust (`sqlx`, `tokio`)
+- IPC UI ↔ core : socket Unix JSON (`/run/mjqbe/native.sock`) ; le core parle au daemon C
 - Authentification locale (pas OAuth) — mode admin par PIN ou mot de passe
 - Pas de conteneur Docker — processus systemd natif
 

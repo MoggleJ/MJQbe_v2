@@ -1,0 +1,23 @@
+[Unit]
+Description=MJQbe native core (IPC server + business logic)
+Documentation=https://github.com/MoggleJ/MJQbe_v2
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mjqbe
+Group=mjqbe
+# Creates /run/mjqbe (0770, owned by the service user) for the sockets.
+RuntimeDirectory=mjqbe
+RuntimeDirectoryMode=0770
+Environment=MJQBE_NATIVE_SOCKET=/run/mjqbe/native.sock
+Environment=RUST_LOG=info
+# DB credentials (DATABASE_URL or POSTGRES_*). File is optional.
+EnvironmentFile=-/etc/mjqbe/core.env
+ExecStart=/opt/mjqbe/bin/mjqbe-core
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

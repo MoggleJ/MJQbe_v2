@@ -1,0 +1,7 @@
+# Rust
+core/target/
+
+# CMake / Qt
+ui/build/
+ui/.cache/
+*.user
