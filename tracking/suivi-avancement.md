@@ -148,3 +148,9 @@ Chaque entrée est horodatée.
 - **Tests** : tsc && vite build OK (53 modules).
 - **Issues fermées** : #108–#113.
 - **Prochaine étape** : Sprint 15 (animations : cube CSS + transition + prévisu thèmes).
+
+### 2026-08-31 03:20 CEST — Sprint 15 : Frontend UX & animations
+- **Fait** : LoadingCube CSS 3D (overlay si auth loading), transition page cubeUp (rotateX+perspective), Settings avec swatches de prévisu, prefers-reduced-motion.
+- **Tests** : build 54 modules, tsc clean, vitest 2/2, SPA re-déployée live.
+- **Issues fermées** : #114–#118.
+- **Prochaine étape** : Sprint 16 (CLI `dev` complet) puis Sprint 17 (sécu/optim/déploiement). **Le bloc web (10-15) est terminé.**

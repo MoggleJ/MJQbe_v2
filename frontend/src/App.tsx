@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { Sidebar } from './components/Sidebar'
+import { LoadingCube } from './components/LoadingCube'
 import { useAuth } from './auth/AuthContext'
 import { Home } from './pages/Home'
 import { AllApps } from './pages/AllApps'
@@ -26,6 +27,8 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  const { loading } = useAuth()
+  if (loading) return <LoadingCube />
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

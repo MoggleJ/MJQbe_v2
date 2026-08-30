@@ -249,3 +249,9 @@ Chaque entrée est horodatée.
 ## 2026-08-31 — Sprint 14 (Frontend mode Desktop)
 - **Fichiers** : +`frontend/src/components/GroupedApps.tsx`, +`frontend/src/pages/Favorites.tsx` ; modifiés : `App.tsx` (+route), `components/Sidebar.tsx` (+lien), `pages/{Home,AllApps}.tsx`, `styles.css`.
 - `docs/plan-implementation.md` Sprint 14 → `[x]` + statut.
+
+---
+## 2026-08-31 — Sprint 15 (Frontend UX & animations)
+- **Fichiers** : +`frontend/src/components/LoadingCube.tsx` ; modifiés : `frontend/src/App.tsx`, `frontend/src/pages/Settings.tsx`, `frontend/src/styles.css`.
+- Image `frontend` reconstruite + recréée.
+- `docs/plan-implementation.md` Sprint 15 → `[x]` + statut.

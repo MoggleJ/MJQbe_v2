@@ -305,20 +305,21 @@ Switch TV/Desktop change le layout. La recherche filtre les apps en temps réel.
 **Statut :** `tsc && vite build` OK (53 modules). Desktop = sections par catégorie (`GroupedApps`) ; TV = grille large. Route `/favorites` + entrée sidebar. Favoris persistés en base (vérifié Sprint 12). Voir `tracking/sprint-14.md`.
 ---
 
-## Sprint 15 — Frontend Web — UX & Animations [WEB]
+## Sprint 15 — Frontend Web — UX & Animations [WEB] ✓
 
 **Objectif :** Animations et page Settings.
 
 ### Tâches
-- [ ] Implémenter l'animation de chargement : cube MJQbe 3D en rotation (CSS 3D)
-- [ ] Implémenter la transition de page : rotation cube vers le haut (CSS 3D transform)
-- [ ] Implémenter la page `Settings` : sélecteur de thème (10 options avec prévisualisation), layout, icon_size
-- [ ] Connecter les settings à l'API (`GET /settings`, `PUT /settings`)
-- [ ] Appliquer le thème en temps réel sans rechargement
+- [x] Animation de chargement — `LoadingCube` : cube CSS 3D (6 faces, `transform-style: preserve-3d`, `@keyframes cubeSpin`), overlay plein écran tant que `useAuth().loading`
+- [x] Transition de page — « cube up » : `.page-enter` → `@keyframes cubeUp` (`rotateX(-32deg)` + translate + scale, `perspective: 1400px` sur `.content`), rejouée à chaque changement de route
+- [x] Page `Settings` — sélecteur de thème avec **prévisualisation** (`.theme-swatch` : barres bg/surface/accent/text par thème)
+- [x] Connecter les settings à l'API — `GET /settings` au login, `PUT /settings` à chaque changement (`UiContext`, déjà S13)
+- [x] Appliquer le thème en temps réel — `applyTheme` écrit les variables CSS sur `:root` dans un `useEffect([theme])` (déjà S13)
+- [x] `prefers-reduced-motion` respecté (cube ralenti, transitions coupées)
 
 ### Livrable de vérification
 Naviguer entre pages → animation cube visible. Changer le thème → appliqué instantanément.
-
+**Statut :** `tsc && vite build` OK (54 modules), vitest 2/2, live SPA re-déployée sur `:4444`. Cube CSS 3D + transition `cubeUp` + swatches de prévisu. Thème temps réel via variables CSS. Voir `tracking/sprint-15.md`.
 ---
 
 ## Sprint 16 — CLI `dev` — Version complète

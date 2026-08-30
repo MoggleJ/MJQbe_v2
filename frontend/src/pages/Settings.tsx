@@ -1,6 +1,6 @@
 import { useUi } from '../theme/UiContext'
 import { useAuth } from '../auth/AuthContext'
-import { THEME_NAMES } from '../theme/themes'
+import { THEMES, THEME_NAMES } from '../theme/themes'
 
 export function SettingsPage() {
   const { theme, setTheme, layout, setLayout, iconSize, setIconSize } = useUi()
@@ -12,16 +12,25 @@ export function SettingsPage() {
 
       <div className="section">
         <h3>Thème</h3>
-        <div className="chips">
-          {THEME_NAMES.map((t) => (
-            <button
-              key={t}
-              className={`chip${theme === t ? ' active' : ''}`}
-              onClick={() => setTheme(t)}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="row" style={{ alignItems: 'flex-start' }}>
+          {THEME_NAMES.map((t) => {
+            const p = THEMES[t]
+            return (
+              <div
+                key={t}
+                className={`theme-swatch${theme === t ? ' active' : ''}`}
+                style={{ background: p.bg }}
+                onClick={() => setTheme(t)}
+                role="button"
+                aria-pressed={theme === t}
+              >
+                <span className="bar" style={{ background: p.surface }} />
+                <span className="bar" style={{ background: p.accent }} />
+                <span className="bar" style={{ background: p.text, opacity: 0.6 }} />
+                <span className="label" style={{ color: p.textDim }}>{t}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 

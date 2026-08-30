@@ -153,3 +153,8 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 ### Session — Sprint 14 (Frontend : mode Desktop) [2026-08-31]
 - `03:1x` — frontend : +`components/GroupedApps.tsx`, +`pages/Favorites.tsx` (+route +sidebar), `AllApps`/`Home` groupés par catégorie en mode desktop, `styles.css` (.grid.desktop, .cat-group).
 - `03:1x` — `docker build ./frontend` — `tsc && vite build` OK (53 modules).
+
+### Session — Sprint 15 (Frontend : UX & animations) [2026-08-31]
+- `03:1x` — frontend : +`components/LoadingCube.tsx`, `styles.css` (.cube-*, cubeUp, .theme-swatch, prefers-reduced-motion), `App.tsx` (LoadingCube si loading), `Settings.tsx` (swatches de prévisu).
+- `03:1x` — `docker build ./frontend --target builder` + `npx tsc --noEmit && npx vitest run` — 54 modules, tsc clean, 2/2.
+- `03:1x` — `docker compose up -d --build frontend` — SPA re-déployée, `/` + `/api/health` OK.

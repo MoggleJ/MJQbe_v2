@@ -110,9 +110,56 @@ textarea.config { width: 100%; min-height: 320px; font-family: ui-monospace, mon
   .content { padding: 16px; }
 }
 
-/* page transition (cube-up, CSS 3D) — Sprint 15 refines */
-.page-enter { animation: pageUp 240ms ease-out; }
-@keyframes pageUp {
-  from { opacity: 0; transform: translateY(24px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+/* page transition — "cube up" flip (CSS 3D), CDC §4.4 */
+.content { perspective: 1400px; }
+.page-enter {
+  transform-origin: top center;
+  animation: cubeUp 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+@keyframes cubeUp {
+  from { opacity: 0; transform: rotateX(-32deg) translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* loading cube — CSS 3D */
+.cube-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+}
+.cube-scene { width: 84px; height: 84px; perspective: 520px; }
+.cube {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d;
+  animation: cubeSpin 2.6s linear infinite;
+}
+.cube-face {
+  position: absolute; width: 84px; height: 84px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 78%, transparent);
+}
+.cf-front  { transform: translateZ(42px); }
+.cf-back   { transform: rotateY(180deg) translateZ(42px); }
+.cf-right  { transform: rotateY(90deg) translateZ(42px); background: var(--surface); }
+.cf-left   { transform: rotateY(-90deg) translateZ(42px); background: var(--surface); }
+.cf-top    { transform: rotateX(90deg) translateZ(42px); }
+.cf-bottom { transform: rotateX(-90deg) translateZ(42px); background: var(--surface); }
+.cube-label { color: var(--text-dim); font-weight: 700; letter-spacing: 1px; }
+@keyframes cubeSpin {
+  from { transform: rotateX(-20deg) rotateY(0); }
+  to   { transform: rotateX(-20deg) rotateY(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cube { animation-duration: 8s; }
+  .page-enter { animation: none; }
+}
+
+/* theme preview swatch (Settings) */
+.theme-swatch {
+  display: inline-flex; flex-direction: column; gap: 6px; align-items: stretch;
+  padding: 8px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; width: 108px;
+}
+.theme-swatch.active { border-color: var(--accent); }
+.theme-swatch .bar { height: 10px; border-radius: 3px; }
+.theme-swatch .label { font-size: 11px; color: var(--text-dim); }
