@@ -48,7 +48,10 @@ input, select, textarea {
 /* app grid */
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 .grid.tv { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px; }
+.grid.desktop { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 12px; }
 .grid.list { display: flex; flex-direction: column; gap: 8px; }
+.cat-group { margin-bottom: 22px; }
+.cat-group h3 { margin: 0 0 10px; color: var(--text-dim); font-size: 14px; font-weight: 600; }
 
 .card { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; background: none; border: none; }
 .card .icon {

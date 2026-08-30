@@ -23,6 +23,7 @@ export function Sidebar() {
       <nav>
         {item('/', 'Accueil')}
         {item('/apps', 'Toutes les apps')}
+        {item('/favorites', 'Favoris')}
         {item('/search', 'Recherche')}
         <button className="nav-item" onClick={toggleMode}>
           ⇄ {mode === 'tv' ? 'MJ Desktop' : 'MJ TV'}

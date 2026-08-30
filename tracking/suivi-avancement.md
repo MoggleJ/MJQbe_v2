@@ -142,3 +142,9 @@ Chaque entrée est horodatée.
 - **Différé** : parcours navigateur cliqué ; page callback OAuth front ; prévisu thèmes (S15).
 - **Issues fermées** : #93–#107 + **#1, #4–#41** (tâches détaillées Sprints 3–7 restées ouvertes). #2 gardée (vérif Pi ARM).
 - **Prochaine étape** : commit `sprint-13:`, push + branche, issues, puis **Sprint 14 (mode Desktop + favoris + recherche front)**.
+
+### 2026-08-31 03:15 CEST — Sprint 14 : Frontend mode Desktop
+- **Fait** : GroupedApps (sections par catégorie), page /favorites + route + sidebar, .grid.desktop dense. Switch mode / recherche / chips / toggle favori déjà faits au S13.
+- **Tests** : tsc && vite build OK (53 modules).
+- **Issues fermées** : #108–#113.
+- **Prochaine étape** : Sprint 15 (animations : cube CSS + transition + prévisu thèmes).

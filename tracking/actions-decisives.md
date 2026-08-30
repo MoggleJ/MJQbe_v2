@@ -244,3 +244,8 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 13 | 17 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+## 2026-08-31 — Sprint 14 (Frontend mode Desktop)
+- **Fichiers** : +`frontend/src/components/GroupedApps.tsx`, +`frontend/src/pages/Favorites.tsx` ; modifiés : `App.tsx` (+route), `components/Sidebar.tsx` (+lien), `pages/{Home,AllApps}.tsx`, `styles.css`.
+- `docs/plan-implementation.md` Sprint 14 → `[x]` + statut.

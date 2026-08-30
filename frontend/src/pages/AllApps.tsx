@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useUi } from '../theme/UiContext'
 import { useApps, useCategories } from '../hooks'
 import { AppGrid } from '../components/AppGrid'
+import { GroupedApps } from '../components/GroupedApps'
 
 export function AllApps() {
   const { mode } = useUi()
@@ -19,6 +20,9 @@ export function AllApps() {
         (needle === '' || a.name.toLowerCase().includes(needle)),
     )
   }, [apps, categoryId, q])
+
+  // Desktop = grouped by category; TV = one large grid.
+  const grouped = mode === 'desktop' && categoryId === 0 && q === ''
 
   return (
     <div className="page-enter">
@@ -50,7 +54,15 @@ export function AllApps() {
         ))}
       </div>
 
-      <AppGrid apps={filtered} empty={loading ? 'Chargement…' : 'Aucune application.'} />
+      {grouped ? (
+        <GroupedApps
+          apps={filtered}
+          categories={categories}
+          empty={loading ? 'Chargement…' : 'Aucune application.'}
+        />
+      ) : (
+        <AppGrid apps={filtered} empty={loading ? 'Chargement…' : 'Aucune application.'} />
+      )}
     </div>
   )
 }

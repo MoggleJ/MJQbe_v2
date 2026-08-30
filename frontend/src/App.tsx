@@ -5,6 +5,7 @@ import { useAuth } from './auth/AuthContext'
 import { Home } from './pages/Home'
 import { AllApps } from './pages/AllApps'
 import { Search } from './pages/Search'
+import { Favorites } from './pages/Favorites'
 import { SettingsPage } from './pages/Settings'
 import { Login } from './pages/Login'
 import { Admin } from './pages/Admin'
@@ -31,6 +32,7 @@ export function App() {
       <Route path="/" element={<Shell><Home /></Shell>} />
       <Route path="/apps" element={<Shell><AllApps /></Shell>} />
       <Route path="/search" element={<Shell><Search /></Shell>} />
+      <Route path="/favorites" element={<Shell><Favorites /></Shell>} />
       <Route path="/settings" element={<Shell><SettingsPage /></Shell>} />
       <Route
         path="/admin"

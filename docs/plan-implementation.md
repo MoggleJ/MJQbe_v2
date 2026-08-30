@@ -288,21 +288,21 @@ Tests passent. `PUT /admin/config` modifie `config.yml`. `POST /admin/services/a
 **Statut :** `tsc && vite build` OK (51 modules) ; **vitest 2/2** (dans Docker) ; **live** : SPA servie sur `:4444` avec assets buildés, `/api/health` et `/api/apps?mode=tv` proxifiés OK, deep-link `/admin` → 200 (fallback nginx). Parcours navigateur (clic login → grille → admin) non cliqué mais toutes les API sous-jacentes sont vérifiées live (Sprints 10-12). Voir `tracking/sprint-13.md`.
 ---
 
-## Sprint 14 — Frontend Web — Mode Desktop [WEB]
+## Sprint 14 — Frontend Web — Mode Desktop [WEB] ✓
 
 **Objectif :** Mode Desktop avec organisation avancée et recherche.
 
 ### Tâches
-- [ ] Implémenter le layout Desktop (organisation dense, catégories groupées)
-- [ ] Implémenter le switch de mode TV ↔ Desktop dans la sidebar
-- [ ] Implémenter la recherche (`/search`) : filtre temps réel sur les apps
-- [ ] Implémenter les favoris : affichage section dédiée, bouton toggle sur AppCard
-- [ ] Implémenter `AllApps` avec filtres par catégorie
-- [ ] Connecter les favoris à l'API
+- [x] Layout Desktop — `GroupedApps` : une section par catégorie (Home + AllApps quand `mode=desktop`, filtre catégorie « Tout », pas de recherche) ; `.grid.desktop` dense (84px) ; `.cat-group`
+- [x] Switch TV ↔ Desktop dans la sidebar (`toggleMode`, persisté via `PUT /settings` `default_mode`)
+- [x] Page `Search` — filtre temps réel (`useApps(mode)` + `includes`), invite si vide
+- [x] Favoris — section dédiée sur `Home` **+ page `/favorites`** ; étoile toggle sur `AppCard` (déjà S13)
+- [x] `AllApps` — chips par catégorie (déjà S13)
+- [x] Connecter les favoris à l'API — `useFavorites` → `GET/POST/DELETE /favorites` (déjà S13)
 
 ### Livrable de vérification
 Switch TV/Desktop change le layout. La recherche filtre les apps en temps réel. Les favoris persistent.
-
+**Statut :** `tsc && vite build` OK (53 modules). Desktop = sections par catégorie (`GroupedApps`) ; TV = grille large. Route `/favorites` + entrée sidebar. Favoris persistés en base (vérifié Sprint 12). Voir `tracking/sprint-14.md`.
 ---
 
 ## Sprint 15 — Frontend Web — UX & Animations [WEB]

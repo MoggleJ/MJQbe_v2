@@ -149,3 +149,7 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `03:0x` — `docker build ./frontend --target builder` + `docker run ... npx vitest run` — **2/2 tests**.
 - `03:0x` — `docker compose up -d --build frontend` ; `curl :4444/` (SPA + assets), `/api/health` + `/api/apps?mode=tv` (proxy nginx OK), `/admin` deep-link → 200.
 - `03:0x` — nettoyage images ; db prod.
+
+### Session — Sprint 14 (Frontend : mode Desktop) [2026-08-31]
+- `03:1x` — frontend : +`components/GroupedApps.tsx`, +`pages/Favorites.tsx` (+route +sidebar), `AllApps`/`Home` groupés par catégorie en mode desktop, `styles.css` (.grid.desktop, .cat-group).
+- `03:1x` — `docker build ./frontend` — `tsc && vite build` OK (53 modules).
