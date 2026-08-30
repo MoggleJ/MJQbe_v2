@@ -127,3 +127,10 @@ Chaque entrée est horodatée.
 - **Erreurs** : db recréé sans port 15432 → re-`up` override native (1 fix) ; constante 422 dépréciée → littéral.
 - **Issues fermées** : #69 #70 #71 #72 #73 #74 #75 #76 #77 #78.
 - **Prochaine étape** : commit `sprint-11:`, push + branche, issues, puis **Sprint 12 (settings/favoris/logs + admin système)**.
+
+### 2026-08-31 02:20 CEST — Sprint 12 : settings/favoris/logs/admin système
+- **Fait** : SettingsRepository/FavoritesRepository/LogRepository, docker_client (httpx UDS), config_file (read/write validé), routes `/settings` `/favorites` `/admin/{logs,users,config,services,reboot}` ; settings auto à l'inscription ; log `app_launch` ; re-auth sur config/reboot.
+- **Tests** : 36 api verts (13 nouveaux), flake8 clean ; live : `/admin/services` liste les 4 conteneurs, `PUT /settings`, favoris, `/admin/logs` avec app_launch.
+- **Décision** : `docker-compose.yml` — `./config` + docker.sock passés en **rw** (nécessaire admin panel ; sécu à revoir S17, proxy socket).
+- **Issues fermées** : #79–#92 + **#67** (`/admin/*` protégé).
+- **Prochaine étape** : commit `sprint-12:`, push + branche, issues, puis **Sprint 13 (Frontend React — layout + mode TV + admin panel)** — le plus gros du web.

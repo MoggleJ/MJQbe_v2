@@ -5,8 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.domain.entities import User
 from app.infrastructure.db.catalog_repo import AppRepository, CategoryRepository
-from app.interface.deps import get_db, require_admin
+from app.infrastructure.db.user_data_repo import LogRepository
+from app.interface.deps import get_db, get_optional_user, require_admin
 
 Mode = Literal["tv", "desktop", "dev"]
 
@@ -88,10 +90,18 @@ def list_apps(
 
 
 @apps_router.get("/{app_id}", response_model=AppOut)
-def get_app(app_id: int, repo: AppRepository = Depends(_apps)):
+def get_app(
+    app_id: int,
+    repo: AppRepository = Depends(_apps),
+    db: Session = Depends(get_db),
+    viewer: User | None = Depends(get_optional_user),
+):
     app = repo.get(app_id)
     if not app:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "app not found")
+    if viewer is not None:
+        # Fetching an app detail == launching it (Sprint 12 logging middleware).
+        LogRepository(db).record("app_launch", viewer.id, {"app_id": app_id})
     return app
 
 

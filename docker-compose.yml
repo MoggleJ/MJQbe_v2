@@ -22,8 +22,9 @@ services:
     environment:
       CONFIG_PATH: /app/config/config.yml
     volumes:
-      - ./config:/app/config:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # rw so the admin panel can persist config.yml (Sprint 12 PUT /admin/config)
+      - ./config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock
       - daemon-socket:/run/mjqbe
     ports:
       - "${API_PORT:-4848}:${API_PORT:-4848}"

@@ -213,3 +213,19 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 11 | 10 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+
+## 2026-08-31 — Sprint 12 (settings/favoris/logs/admin système)
+
+### ~02:00 CEST — API : données per-user + admin système
+- **Fichiers** : +`api/app/infrastructure/db/user_data_repo.py`, +`api/app/infrastructure/docker_client.py`, +`api/app/infrastructure/config_file.py`, +`api/app/interface/routes/{user_data,admin}.py`, +`api/tests/test_{user_data,admin}.py` ; modifiés : `api/app/interface/{deps,routes/auth,routes/catalog}.py`, `api/app/application/auth_service.py`, `api/app/main.py`.
+- **`docker-compose.yml`** : mount `./config:/app/config` et `/var/run/docker.sock` **sans `:ro`** (l'admin panel écrit config.yml et pilote les services). Retour arrière : remettre `:ro` (mais `PUT /admin/config` + actions services cassent).
+- **Sécurité** : `/admin/*` = JWT admin ; `PUT /admin/config` + `/reboot` = re-auth mot de passe (body). Socket Docker rw dans l'api → à durcir S17.
+- **Impact machine** : image `api` reconstruite + recréée ; ~27 users de test dans la base `mjqbe` (dev).
+
+### Fichiers hors api
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 12 | 16 tâches `[x]`, bloc statut | sprint terminé |
+| `docker-compose.yml` (l.24-27) | `./config` + docker.sock → rw | admin panel (config write + services) |

@@ -5,11 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 
+from sqlalchemy.orm import Session
+
 from app.application.auth_service import AuthError, AuthService
 from app.domain.entities import User
+from app.infrastructure.db.user_data_repo import SettingsRepository
 from app.infrastructure.db.user_repo import UserRepository
 from app.infrastructure.oauth.providers import get_provider
-from app.interface.deps import get_current_user, get_users
+from app.interface.deps import get_current_user, get_db, get_users
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -45,8 +48,10 @@ class UserResponse(BaseModel):
     role: str
 
 
-def _service(users: UserRepository = Depends(get_users)) -> AuthService:
-    return AuthService(users)
+def _service(
+    users: UserRepository = Depends(get_users), db: Session = Depends(get_db)
+) -> AuthService:
+    return AuthService(users, settings=SettingsRepository(db))
 
 
 def _handle(fn):

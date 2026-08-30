@@ -132,3 +132,11 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `01:4x` — `flake8 app tests` clean ; `pytest` — erreurs DB (db recréé en prod sans :15432) → `docker compose ... native.yml up -d db` → **23 passed**.
 - `01:4x` — `sed 's/HTTP_422_UNPROCESSABLE_ENTITY/422/'` (constante Starlette dépréciée).
 - `01:4x` — `docker compose up -d --build api` ; live : `GET /apps?mode=tv`→7, `POST /apps` 401 sans token / 201 admin, `GET /categories?mode=dev`→3 ; probe app 21 supprimée ; db restauré prod.
+
+### Session — Sprint 12 (WEB : settings/favoris/logs/admin système) [2026-08-31]
+
+- `02:0x` — api : +`infrastructure/db/user_data_repo.py`, +`infrastructure/docker_client.py` (httpx UDS), +`infrastructure/config_file.py`, +`interface/routes/{user_data,admin}.py` ; `deps.py` (+get_optional_user, +verify_reauth) ; `auth_service.py` (_ensure_settings) ; `catalog.py` (log app_launch) ; `main.py` (+2 routers). +`tests/test_user_data.py` (6), +`tests/test_admin.py` (13).
+- `02:0x` — `docker-compose.yml` : `./config` + socket Docker → **rw** (retrait `:ro`) pour l'admin panel.
+- `02:1x` — `flake8 app tests` clean ; `pytest` → **36 passed** (config testé sur fichier tmp via `monkeypatch CONFIG_PATH`).
+- `02:1x` — `docker compose up -d --build api` ; live : settings auto-créés + PUT, favoris, `GET /apps/{id}`→log, `/admin/logs`/`users`/`services`(4 conteneurs via socket)/`config`. Guards 401/403 OK.
+- `02:2x` — db restauré prod.

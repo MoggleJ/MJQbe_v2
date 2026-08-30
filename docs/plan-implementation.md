@@ -238,31 +238,27 @@ Tests passent. `GET /apps?mode=tv` retourne les apps TV du seed. `POST /apps` sa
 
 ---
 
-## Sprint 12 — API — Settings, Favorites, Logs & Admin Système [WEB]
+## Sprint 12 — API — Settings, Favorites, Logs & Admin Système [WEB] ✓
 
 **Objectif :** Données per-user (settings, favoris), logs, et administration système.
 
 ### Tâches
-- [ ] `GET /settings` — settings de l'utilisateur connecté
-- [ ] `PUT /settings` — mise à jour (thème, layout, icon_size, default_mode)
-- [ ] Création automatique des settings à l'inscription (hook post-register)
-- [ ] `GET /favorites` — favoris de l'utilisateur connecté
-- [ ] `POST /favorites/:app_id` — ajouter un favori
-- [ ] `DELETE /favorites/:app_id` — retirer un favori
-- [ ] Middleware de logging : enregistrer `app_launch` à chaque `GET /apps/:id` par un user connecté
-- [ ] `GET /admin/logs` — liste des logs (admin, avec pagination)
-- [ ] `GET /admin/users` — liste des users (admin)
-- [ ] `GET /admin/config` — lire `config/config.yml` (admin)
-- [ ] `PUT /admin/config` — écrire `config/config.yml` + valider la structure (admin)
-- [ ] `GET /admin/services` — état de chaque service Docker (via socket Docker)
-- [ ] `POST /admin/services/:name/restart` — redémarrer un service Docker (admin)
-- [ ] `POST /admin/services/:name/stop` — arrêter un service (admin)
-- [ ] `POST /admin/reboot` — redémarrer tous les services (admin, re-auth obligatoire)
-- [ ] Écrire les tests
+- [x] `GET /settings` / `PUT /settings` (thème/layout/icon_size/default_mode, validation enum → 422)
+- [x] Création auto des settings à l'inscription — `AuthService._ensure_settings` (register + oauth_upsert)
+- [x] `GET /favorites` / `POST /favorites/:app_id` (201, idempotent, 404 app inconnue) / `DELETE /favorites/:app_id`
+- [x] Logging `app_launch` — `GET /apps/:id` par un user authentifié → `LogRepository.record("app_launch", uid, {app_id})` (dépendance `get_optional_user`)
+- [x] `GET /admin/logs` — pagination `limit`/`offset` + `total`
+- [x] `GET /admin/users`
+- [x] `GET /admin/config` — lit `config/config.yml`
+- [x] `PUT /admin/config` — écrit + valide (`server.web_port`/`api_port` requis) + **re-auth** (mot de passe dans le body)
+- [x] `GET /admin/services` — API Docker via socket Unix (`httpx` UDS), filtré sur le projet compose
+- [x] `POST /admin/services/:name/restart` / `/stop` — 202
+- [x] `POST /admin/reboot` — **re-auth** ; redémarre les autres services puis `api` en différé (hors thread requête)
+- [x] Tests — `test_user_data.py` (6) + `test_admin.py` (13, config sur fichier tmp) → **36 api total**
 
 ### Livrable de vérification
 Tests passent. `PUT /admin/config` modifie `config.yml`. `POST /admin/services/api/restart` redémarre le conteneur.
-
+**Statut :** **36 tests api** verts, flake8 clean. Live : settings auto-créés (theme `dark`) + `PUT` → `light-blue` ; favoris `[4]` ; `GET /apps/{id}` user → log `app_launch` visible dans `/admin/logs` ; `/admin/users` → 27 ; **`/admin/services` liste les 4 conteneurs via le socket Docker** ; `/admin/config` → `web_port 4444`. Guards : non-admin → 403, sans token → 401. `docker-compose.yml` : mount `./config` passé en **rw** + socket Docker (retrait `:ro`). Voir `tracking/sprint-12.md`.
 ---
 
 ## Sprint 13 — Frontend Web — Layout, Mode TV & Admin Panel [WEB]

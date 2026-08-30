@@ -26,8 +26,13 @@ class TokenPair:
 
 
 class AuthService:
-    def __init__(self, users: UserRepository):
+    def __init__(self, users: UserRepository, settings=None):
         self.users = users
+        self.settings = settings  # optional SettingsRepository
+
+    def _ensure_settings(self, user: User) -> None:
+        if self.settings is not None:
+            self.settings.get_or_create(user.id)
 
     # --- local -----------------------------------------------------------
     def register(self, username: str, password: str, email: str | None) -> User:
@@ -37,9 +42,11 @@ class AuthService:
             raise AuthError("username already taken", 409)
         if email and self.users.get_by_email(email):
             raise AuthError("email already registered", 409)
-        return self.users.create(
+        user = self.users.create(
             username=username, email=email, password_hash=hash_password(password)
         )
+        self._ensure_settings(user)
+        return user
 
     def login(self, username: str, password: str) -> tuple[User, TokenPair]:
         user = self.users.get_by_username(username)
@@ -75,6 +82,7 @@ class AuthService:
                 oauth_provider=info.provider,
                 oauth_id=info.oauth_id,
             )
+            self._ensure_settings(user)
         self.users.touch_last_login(user)
         return user, self._issue(user)
 

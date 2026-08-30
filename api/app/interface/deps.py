@@ -57,3 +57,25 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "admin":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "admin role required")
     return user
+
+
+def get_optional_user(
+    creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    users: UserRepository = Depends(get_users),
+) -> User | None:
+    """Like get_current_user but returns None instead of raising (for logging)."""
+    if creds is None:
+        return None
+    try:
+        payload = decode_token(creds.credentials, expected_type="access")
+    except TokenError:
+        return None
+    return users.get(int(payload["sub"]))
+
+
+def verify_reauth(user: User, password: str) -> None:
+    """Re-check the caller's own password (for destructive admin actions)."""
+    from app.infrastructure.security.passwords import verify_password
+
+    if not verify_password(password, user.password_hash):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "re-authentication failed")

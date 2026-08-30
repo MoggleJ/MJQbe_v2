@@ -9,9 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.infrastructure.db import seed
 from app.infrastructure.db.session import SessionLocal
 from app.interface.deps import get_config, require_admin
+from app.interface.routes import admin as admin_routes
 from app.interface.routes import auth as auth_routes
 from app.interface.routes import catalog as catalog_routes
 from app.interface.routes import dev as dev_routes
+from app.interface.routes import user_data as user_data_routes
 
 
 def _run_migrations() -> None:
@@ -60,6 +62,8 @@ app.add_middleware(
 app.include_router(auth_routes.router)
 app.include_router(catalog_routes.apps_router)
 app.include_router(catalog_routes.categories_router)
+app.include_router(user_data_routes.router)
+app.include_router(admin_routes.router)  # every route already Depends(require_admin)
 # /dev/* is admin-only (Sprint 10).
 app.include_router(dev_routes.router, dependencies=[Depends(require_admin)])
 
