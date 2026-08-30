@@ -14,7 +14,39 @@
       "Bash(git -C /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2 branch)",
       "Bash(bash cli/dev up)",
       "Bash(curl -s -o /dev/null -w \"frontend HTTP %{http_code}\" http://localhost:4444)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(gh repo *)",
+      "Bash(gh auth *)",
+      "Bash(gh issue create --title '[Sprint-02] Tests automatisés Alembic + seed manquants' --body 'Les migrations Alembic et le seed sont fonctionnels \\(vérifiés via `dev db` + `\\\\dt`\\), mais aucun test pytest automatisé n'\\\\''a été écrit pour couvrir : *)",
+      "Bash(gh issue create --title '[Sprint-02] Vérifier migrations + seed sur Pi réel' --body 'Le sprint 2 a été développé et testé en environnement Docker local \\(x86\\). La vérification sur Raspberry Pi 4 \\(ARM64\\) n'\\\\''a pas encore été faite : *)",
+      "Bash(gh api *)",
+      "Bash(gh issue *)",
+      "Bash(git grep *)",
+      "Bash(git clone *)",
+      "Bash(mkdir -p /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2/.github/wiki *)",
+      "Bash(chmod +x /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2/.github/wiki/PUSH_WIKI.sh)",
+      "Bash(pip index *)",
+      "Bash(docker exec *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\)[0]; print\\(d['State']\\)\")",
+      "Bash(cat /tmp/docker_test.txt 2>/dev/null || echo \"file not created\")",
+      "Read(//tmp/**)",
+      "Bash(bash /home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2/cli/dev logs api)",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "Bash(python3 -c \"import psycopg2; print\\('psycopg2 available:', psycopg2.__version__\\)\")",
+      "Bash(curl -s http://localhost:4848/docs)",
+      "Read(//proc/21817/fd/**)",
+      "Read(//var/snap/docker/**)",
+      "Bash(journalctl -u snap.docker.dockerd --since \"10 minutes ago\")",
+      "Bash(sudo journalctl -u snap.docker.dockerd --since \"20 min ago\" --no-pager)",
+      "Bash(# Write *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(sudo docker cp /tmp/verify_db.py 7e24b382447f:/tmp/verify_db.py)",
+      "Bash(curl -s --unix-socket /var/run/docker.sock http://localhost/containers/7e24b382447f/exec -X POST -H 'Content-Type: application/json' -d '{\"Cmd\":[\"python3\",\"-c\",\"print\\(123\\)\"],\"AttachStdout\":true,\"AttachStderr\":true}')"
+    ],
+    "additionalDirectories": [
+      "/tmp/mjqbe-wiki",
+      "/tmp"
     ]
   }
 }
