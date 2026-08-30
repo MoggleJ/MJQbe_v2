@@ -51,7 +51,14 @@ Rectangle {
 
         SidebarButton {
             label: "⇄  " + (root.modeTitle === "MJ TV" ? qsTr("MJ Desktop") : qsTr("MJ TV"))
+            visible: root.modeTitle !== "MJ Dev"
             onClicked: root.switchMode()
+        }
+
+        SidebarButton {
+            label: "🔒  " + qsTr("MJ Dev")
+            active: root.currentPage === "Dev"
+            onClicked: root.navigate("Dev")
         }
     }
 

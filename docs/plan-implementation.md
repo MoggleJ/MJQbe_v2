@@ -95,23 +95,24 @@ Mode TV : grille apps visible, navigation clavier/télécommande. Mode Desktop :
 
 ---
 
-## Sprint 5 — App Native — Mode Dev [NATIVE]
+## Sprint 5 — App Native — Mode Dev [NATIVE] ✓
 
 **Objectif :** Dashboard de monitoring et contrôle système dans l'app native.
 
 ### Tâches
-- [ ] `Dev.qml` : gate re-auth admin avant affichage
-- [ ] Widgets monitoring QML : CPU, RAM, disque, réseau, température
-- [ ] Couche Rust `system/` : lecture `/proc/stat`, `/proc/meminfo`, `sysfs` temp
-- [ ] Rust : liste des processus (`/proc/<pid>/status`), kill/nice via `libc`
-- [ ] Rust : liste des conteneurs Docker (appel CLI `docker ps` ou API Unix socket)
-- [ ] Terminal QML : `QProcess` → bash, texte dans `TextArea` scrollable
-- [ ] Gestion serveurs : démarrer/arrêter conteneurs (Rust → `docker start/stop`)
-- [ ] Lien interface graphique Pi : `Qt.openUrlExternally` vers VNC ou `startx`
-- [ ] Re-auth via dialog QML avant toute action destructive
+- [x] `Dev.qml` : gate re-auth admin (`auth.verify`) avant affichage
+- [x] Widgets monitoring QML : `Gauge` CPU / RAM / disque / température + débit réseau + load + uptime
+- [x] Couche Rust `infrastructure/system/` : `/proc/stat` (CPU %), `/proc/meminfo`, `/proc/net/dev`, `statvfs`, `sysfs` thermal
+- [x] Rust : liste process (`/proc/<pid>/status` + `stat`), `kill` / `setpriority` via `libc` (refus pid ≤ 1, mapping EPERM/ESRCH)
+- [x] Rust : liste conteneurs Docker via CLI `docker ps -a` (validation d'id anti-injection)
+- [x] Terminal QML : `TerminalController` (`QProcess` → `bash -i`, `MergedChannels`) → `TextArea`
+- [x] Gestion serveurs : `docker.start` / `docker.stop` (Rust → `docker`)
+- [x] Lien interface graphique Pi : bouton → `Qt.openUrlExternally("vnc://…")`
+- [x] Re-auth via `Dialog` QML avant toute action destructive (token à usage unique, TTL 120 s)
 
 ### Livrable de vérification
 Sur Pi : mode Dev accessible après auth admin → stats CPU/RAM en temps réel → terminal fonctionnel.
+**Statut :** build Rust+Qt OK ; **37 tests** core (clippy clean) ; E2E : `system.snapshot` (CPU/mem/disk/**temp 46 °C**/net réels), `process.list` (tri RSS réel), `docker.list` (14 conteneurs), `process.kill` sans token → `reauth_required`, `auth.verify` → token usage unique, injection d'id Docker bloquée ; smoke-test Docker offscreen OK. Vérif sur Pi + terminal PTY : différés. Voir `tracking/sprint-5.md`.
 
 ---
 

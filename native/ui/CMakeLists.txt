@@ -14,6 +14,8 @@ qt_add_executable(mjqbe-native
     src/main.cpp
     src/NativeBridge.cpp
     src/NativeBridge.h
+    src/TerminalController.cpp
+    src/TerminalController.h
 )
 
 # ThemeManager is a QML singleton (shared palette, 10 themes).
@@ -32,11 +34,13 @@ qt_add_qml_module(mjqbe-native
         qml/AppCard.qml
         qml/CategoryChips.qml
         qml/AppGrid.qml
+        qml/Gauge.qml
         qml/pages/Home.qml
         qml/pages/AllApps.qml
         qml/pages/Search.qml
         qml/pages/Settings.qml
         qml/pages/Login.qml
+        qml/pages/Dev.qml
 )
 
 target_link_libraries(mjqbe-native PRIVATE

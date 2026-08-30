@@ -1,7 +1,8 @@
 // MJQbe native UI — Qt6 / QML entry point.
 //
 // Loads the QML root, wires a NativeBridge (Unix-socket client to mjqbe-core)
-// into the QML context. Fullscreen by default; pass --windowed for desktop dev.
+// and a TerminalController (local bash) into the QML context. Fullscreen by
+// default; pass --windowed for desktop dev.
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -11,6 +12,7 @@
 #include <QUrl>
 
 #include "NativeBridge.h"
+#include "TerminalController.h"
 
 int main(int argc, char *argv[])
 {
@@ -39,8 +41,11 @@ int main(int argc, char *argv[])
         bridge.setSocketPath(parser.value(socketOpt));
     bridge.connectToCore();
 
+    TerminalController terminal;
+
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("Bridge"), &bridge);
+    engine.rootContext()->setContextProperty(QStringLiteral("Terminal"), &terminal);
     engine.rootContext()->setContextProperty(QStringLiteral("startFullScreen"),
                                              !parser.isSet(windowedOpt));
 

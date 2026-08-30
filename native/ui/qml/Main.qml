@@ -79,14 +79,24 @@ ApplicationWindow {
     Component { id: searchPage;   Search {} }
     Component { id: settingsPage; Settings {} }
     Component { id: loginPage;    Login {} }
+    Component { id: devPage;      Dev {} }
+
+    property string previousUserMode: "tv"
 
     function go(page) {
         const map = {
             "Home": homePage, "AllApps": allAppsPage, "Search": searchPage,
-            "Settings": settingsPage, "Login": loginPage
+            "Settings": settingsPage, "Login": loginPage, "Dev": devPage
         };
         if (map[page] === undefined)
             return;
+        // Dev mode drives the sidebar title; remember the consumption mode to restore.
+        if (page === "Dev" && window.mode !== "dev") {
+            window.previousUserMode = window.mode;
+            window.mode = "dev";
+        } else if (page !== "Dev" && window.mode === "dev") {
+            window.mode = window.previousUserMode;
+        }
         stack.currentPageName = page;
         stack.replace(map[page]);
     }

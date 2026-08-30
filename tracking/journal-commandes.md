@@ -56,3 +56,14 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `23:3x` — création `native/ui/Dockerfile.smoketest` + `native/ui/smoketest.sh`.
 - `23:3x` — `bash native/ui/smoketest.sh /tmp/mjqbe-dev.sock` — _« VERDICT: OK — QML tree loaded »._
 - `23:35` — `pkill -x mjqbe-core` ; `docker rmi mjqbe-native-smoke` ; `docker compose ... prod.yml up -d db` — _nettoyage, db restaurée._
+
+### Session — Sprint 5 (mode Dev natif)
+
+- `23:4x` — core : +`infrastructure/system/{metrics,processes,docker}.rs`, +`application/dev.rs`, tokens ré-auth dans `auth.rs`, 8 méthodes IPC.
+- `23:4x` — `cargo test` → 36 unit + 1 intégration = 37 OK ; `cargo clippy -D warnings` → 1 fix (`sort_by_key`) → clean ; `cargo fmt`.
+- `23:4x` — `cargo add` implicite : `libc`, `rand` + feature tokio `process` (build initial : erreur `tokio::process` absent → feature ajoutée).
+- `23:4x` — UI : +`src/TerminalController.{h,cpp}`, +`qml/Gauge.qml`, +`qml/pages/Dev.qml`, `NativeBridge` +8 méthodes, `Sidebar`/`Main` entrée Dev.
+- `23:4x` — `cmake -S native/ui -B build && cmake --build build` — OK.
+- `23:4x` — core (background) + `python3 scratchpad/ipc_probe5.py /tmp/mjqbe-dev.sock admin` — snapshot/process/docker/verify/token E2E OK.
+- `23:47` — `bash native/ui/smoketest.sh /tmp/mjqbe-dev.sock` — « VERDICT: OK ».
+- `23:47` — `pkill -x mjqbe-core` ; `docker rmi mjqbe-native-smoke` ; `docker compose ... prod.yml up -d db` — nettoyage.

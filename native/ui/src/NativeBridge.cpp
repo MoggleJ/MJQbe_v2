@@ -140,6 +140,12 @@ void NativeBridge::dispatch(const QJsonObject &message)
         const QString msg = error.value(QStringLiteral("message")).toString();
         if (method == QStringLiteral("auth.login"))
             emit loginResult(false, QString(), msg);
+        else if (method == QStringLiteral("auth.verify"))
+            emit verifyResult(false, QString(), msg);
+        else if (method == QStringLiteral("process.kill") || method == QStringLiteral("process.nice")
+                 || method == QStringLiteral("docker.start")
+                 || method == QStringLiteral("docker.stop"))
+            emit devActionResult(method, false, msg);
         else
             emit coreError(code, msg);
         return;
@@ -173,6 +179,18 @@ void NativeBridge::dispatch(const QJsonObject &message)
         m_userName = o.value(QStringLiteral("username")).toString(m_userName);
         emit sessionChanged();
         emit loginResult(true, o.value(QStringLiteral("role")).toString(), QString());
+    } else if (method == QStringLiteral("auth.verify")) {
+        emit verifyResult(true, data.toObject().value(QStringLiteral("token")).toString(), QString());
+    } else if (method == QStringLiteral("system.snapshot")) {
+        emit snapshotReceived(data.toObject().toVariantMap());
+    } else if (method == QStringLiteral("process.list")) {
+        emit processesReceived(data.toArray().toVariantList());
+    } else if (method == QStringLiteral("docker.list")) {
+        emit containersReceived(data.toArray().toVariantList());
+    } else if (method == QStringLiteral("process.kill") || method == QStringLiteral("process.nice")
+               || method == QStringLiteral("docker.start")
+               || method == QStringLiteral("docker.stop")) {
+        emit devActionResult(method, true, QString());
     }
     // ping / health: nothing to surface.
 }
@@ -234,4 +252,50 @@ void NativeBridge::login(const QString &username, const QString &password)
     send(QStringLiteral("auth.login"),
          QJsonObject{{QStringLiteral("username"), username},
                      {QStringLiteral("password"), password}});
+}
+
+void NativeBridge::verify(const QString &password)
+{
+    send(QStringLiteral("auth.verify"), QJsonObject{{QStringLiteral("password"), password}});
+}
+
+void NativeBridge::systemSnapshot()
+{
+    send(QStringLiteral("system.snapshot"), {});
+}
+
+void NativeBridge::listProcesses(int limit)
+{
+    send(QStringLiteral("process.list"), QJsonObject{{QStringLiteral("limit"), limit}});
+}
+
+void NativeBridge::killProcess(const QString &token, int pid)
+{
+    send(QStringLiteral("process.kill"),
+         QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("pid"), pid}});
+}
+
+void NativeBridge::niceProcess(const QString &token, int pid, int niceness)
+{
+    send(QStringLiteral("process.nice"),
+         QJsonObject{{QStringLiteral("token"), token},
+                     {QStringLiteral("pid"), pid},
+                     {QStringLiteral("niceness"), niceness}});
+}
+
+void NativeBridge::listContainers()
+{
+    send(QStringLiteral("docker.list"), {});
+}
+
+void NativeBridge::dockerStart(const QString &token, const QString &id)
+{
+    send(QStringLiteral("docker.start"),
+         QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("id"), id}});
+}
+
+void NativeBridge::dockerStop(const QString &token, const QString &id)
+{
+    send(QStringLiteral("docker.stop"),
+         QJsonObject{{QStringLiteral("token"), token}, {QStringLiteral("id"), id}});
 }

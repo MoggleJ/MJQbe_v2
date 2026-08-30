@@ -800,6 +800,8 @@ dependencies = [
  "async-trait",
  "bcrypt",
  "chrono",
+ "libc",
+ "rand",
  "serde",
  "serde_json",
  "sqlx",

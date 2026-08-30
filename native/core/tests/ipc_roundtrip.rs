@@ -3,7 +3,9 @@
 
 use std::sync::Arc;
 
-use mjqbe_core::application::{AuthService, CatalogService, FavoritesService, SettingsService};
+use mjqbe_core::application::{
+    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+};
 use mjqbe_core::infrastructure::hardware::Platform;
 use mjqbe_core::interface::ipc::{handle_conn, Handler, Services};
 
@@ -22,6 +24,7 @@ async fn ping_health_and_error_over_socket() {
             auth: AuthService::new(None),
             favorites: FavoritesService::new(None),
             settings: SettingsService::new(None),
+            dev: DevService::new(Platform::Stub),
         },
         Platform::Stub,
     ));

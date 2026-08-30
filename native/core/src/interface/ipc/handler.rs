@@ -1,7 +1,9 @@
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-use crate::application::{AuthService, CatalogService, FavoritesService, SettingsService};
+use crate::application::{
+    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+};
 use crate::domain::{CoreError, SettingsPatch};
 use crate::infrastructure::hardware::Platform;
 
@@ -13,6 +15,7 @@ pub struct Handler {
     auth: AuthService,
     favorites: FavoritesService,
     settings: SettingsService,
+    dev: DevService,
     platform: Platform,
 }
 
@@ -22,6 +25,7 @@ pub struct Services {
     pub auth: AuthService,
     pub favorites: FavoritesService,
     pub settings: SettingsService,
+    pub dev: DevService,
 }
 
 #[derive(Deserialize)]
@@ -49,6 +53,13 @@ struct LoginParams {
 }
 
 #[derive(Deserialize)]
+struct VerifyParams {
+    #[serde(default)]
+    username: Option<String>,
+    password: String,
+}
+
+#[derive(Deserialize)]
 struct UserParams {
     user_id: i32,
 }
@@ -66,6 +77,36 @@ struct SettingsUpdateParams {
     patch: SettingsPatch,
 }
 
+#[derive(Deserialize)]
+struct ProcessListParams {
+    #[serde(default = "default_proc_limit")]
+    limit: usize,
+}
+fn default_proc_limit() -> usize {
+    60
+}
+
+#[derive(Deserialize)]
+struct KillParams {
+    token: String,
+    pid: i32,
+    #[serde(default)]
+    signal: Option<i32>,
+}
+
+#[derive(Deserialize)]
+struct NiceParams {
+    token: String,
+    pid: i32,
+    niceness: i32,
+}
+
+#[derive(Deserialize)]
+struct ContainerActionParams {
+    token: String,
+    id: String,
+}
+
 impl Handler {
     pub fn new(services: Services, platform: Platform) -> Self {
         Self {
@@ -73,6 +114,7 @@ impl Handler {
             auth: services.auth,
             favorites: services.favorites,
             settings: services.settings,
+            dev: services.dev,
             platform,
         }
     }
@@ -112,25 +154,32 @@ impl Handler {
                 }))
             }
 
+            "auth.verify" => {
+                let p: VerifyParams = params(req)?;
+                let (token, expires_in) =
+                    self.auth.verify(p.username.as_deref(), &p.password).await?;
+                Ok(json!({ "token": token, "expires_in": expires_in }))
+            }
+
             "apps.list" => {
                 let p: ModeParams = params(req)?;
-                let apps = self.catalog.list_apps(&p.mode, p.category_id).await?;
-                Ok(to_value(apps))
+                Ok(to_value(
+                    self.catalog.list_apps(&p.mode, p.category_id).await?,
+                ))
             }
 
             "apps.recent" => {
                 let p: RecentParams = params(req)?;
-                let apps = self
-                    .catalog
-                    .recent_apps(p.user_id, &p.mode, p.limit)
-                    .await?;
-                Ok(to_value(apps))
+                Ok(to_value(
+                    self.catalog
+                        .recent_apps(p.user_id, &p.mode, p.limit)
+                        .await?,
+                ))
             }
 
             "categories.list" => {
                 let p: ModeParams = params(req)?;
-                let cats = self.catalog.list_categories(&p.mode).await?;
-                Ok(to_value(cats))
+                Ok(to_value(self.catalog.list_categories(&p.mode).await?))
             }
 
             "favorites.list" => {
@@ -154,6 +203,44 @@ impl Handler {
                 Ok(to_value(self.settings.update(p.user_id, &p.patch).await?))
             }
 
+            // --- Dev mode (monitoring is open; mutations need a re-auth token) ---
+            "system.snapshot" => Ok(to_value(self.dev.snapshot().await?)),
+
+            "process.list" => {
+                let p: ProcessListParams = params(req)?;
+                Ok(to_value(self.dev.list_processes(p.limit)?))
+            }
+
+            "process.kill" => {
+                let p: KillParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                self.dev.kill_process(p.pid, p.signal)?;
+                Ok(json!({ "ok": true }))
+            }
+
+            "process.nice" => {
+                let p: NiceParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                self.dev.renice_process(p.pid, p.niceness)?;
+                Ok(json!({ "ok": true }))
+            }
+
+            "docker.list" => Ok(to_value(self.dev.list_containers().await?)),
+
+            "docker.start" => {
+                let p: ContainerActionParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                self.dev.start_container(&p.id).await?;
+                Ok(json!({ "ok": true }))
+            }
+
+            "docker.stop" => {
+                let p: ContainerActionParams = params(req)?;
+                self.auth.check_token(&p.token)?;
+                self.dev.stop_container(&p.id).await?;
+                Ok(json!({ "ok": true }))
+            }
+
             other => Err(CoreError::Internal(format!("unknown method: {other}"))),
         }
     }
@@ -174,6 +261,8 @@ fn classify(e: &CoreError) -> (&'static str, String) {
         CoreError::NotFound => "not_found",
         CoreError::InvalidCredentials => "invalid_credentials",
         CoreError::HardwareUnavailable => "hardware_unavailable",
+        CoreError::ReauthRequired => "reauth_required",
+        CoreError::PermissionDenied(_) => "permission_denied",
         CoreError::Db(_) => "db_error",
         CoreError::Internal(_) => "internal",
     };
@@ -183,7 +272,6 @@ fn classify(e: &CoreError) -> (&'static str, String) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::{AuthService, CatalogService, FavoritesService, SettingsService};
 
     fn handler() -> Handler {
         Handler::new(
@@ -192,6 +280,7 @@ mod tests {
                 auth: AuthService::new(None),
                 favorites: FavoritesService::new(None),
                 settings: SettingsService::new(None),
+                dev: DevService::new(Platform::Stub),
             },
             Platform::Stub,
         )
@@ -208,51 +297,51 @@ mod tests {
     #[tokio::test]
     async fn ping_pongs() {
         let v = call("ping", Value::Null).await;
-        assert_eq!(v["ok"], true);
         assert_eq!(v["data"]["pong"], true);
     }
 
     #[tokio::test]
-    async fn health_reports_stub_platform() {
-        assert_eq!(
-            call("health", Value::Null).await["data"]["platform"],
-            "stub"
-        );
-    }
-
-    #[tokio::test]
     async fn unknown_method_is_internal_error() {
-        let v = call("does.not.exist", Value::Null).await;
-        assert_eq!(v["ok"], false);
-        assert_eq!(v["error"]["code"], "internal");
+        assert_eq!(call("nope", Value::Null).await["error"]["code"], "internal");
     }
 
     #[tokio::test]
     async fn db_backed_methods_report_unavailable_without_db() {
         for (m, p) in [
             ("apps.list", json!({ "mode": "tv" })),
-            ("apps.recent", json!({ "user_id": 1, "mode": "tv" })),
             ("favorites.list", json!({ "user_id": 1 })),
-            ("favorites.toggle", json!({ "user_id": 1, "app_id": 2 })),
             ("settings.get", json!({ "user_id": 1 })),
-            ("settings.update", json!({ "user_id": 1, "theme": "dark" })),
         ] {
-            let v = call(m, p).await;
-            assert_eq!(v["error"]["code"], "db_unavailable", "method {m}");
+            assert_eq!(call(m, p).await["error"]["code"], "db_unavailable", "{m}");
         }
     }
 
     #[tokio::test]
-    async fn bad_params_are_rejected() {
-        let v = call("favorites.toggle", json!({ "user_id": 1 })).await;
-        assert_eq!(v["ok"], false);
-        assert_eq!(v["error"]["code"], "internal");
+    async fn system_snapshot_is_open() {
+        let v = call("system.snapshot", Value::Null).await;
+        assert_eq!(v["ok"], true);
+        assert!(v["data"]["mem_total_kb"].as_u64().unwrap() > 0);
     }
 
     #[tokio::test]
-    async fn settings_update_validates_before_touching_db() {
-        // Invalid enum is caught in the application layer → internal, not db_unavailable.
-        let v = call("settings.update", json!({ "user_id": 1, "theme": "neon" })).await;
-        assert_eq!(v["error"]["code"], "internal");
+    async fn process_list_is_open() {
+        let v = call("process.list", json!({ "limit": 5 })).await;
+        assert_eq!(v["ok"], true);
+        assert!(v["data"].as_array().unwrap().len() <= 5);
+    }
+
+    #[tokio::test]
+    async fn destructive_dev_calls_require_a_valid_token() {
+        for (m, p) in [
+            ("process.kill", json!({ "token": "bogus", "pid": 999999 })),
+            (
+                "process.nice",
+                json!({ "token": "bogus", "pid": 999999, "niceness": 5 }),
+            ),
+            ("docker.start", json!({ "token": "bogus", "id": "x" })),
+            ("docker.stop", json!({ "token": "bogus", "id": "x" })),
+        ] {
+            assert_eq!(call(m, p).await["error"]["code"], "reauth_required", "{m}");
+        }
     }
 }

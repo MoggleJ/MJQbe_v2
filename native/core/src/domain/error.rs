@@ -18,6 +18,12 @@ pub enum CoreError {
     #[error("hardware unavailable on this platform (stub mode)")]
     HardwareUnavailable,
 
+    #[error("re-authentication required")]
+    ReauthRequired,
+
+    #[error("operation not permitted: {0}")]
+    PermissionDenied(String),
+
     #[error("database error: {0}")]
     Db(String),
 

@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use tracing_subscriber::EnvFilter;
 
-use mjqbe_core::application::{AuthService, CatalogService, FavoritesService, SettingsService};
+use mjqbe_core::application::{
+    AuthService, CatalogService, DevService, FavoritesService, SettingsService,
+};
 use mjqbe_core::config::Config;
 use mjqbe_core::domain;
 use mjqbe_core::infrastructure::db::{
@@ -52,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
         settings: SettingsService::new(db.map(|db| {
             Arc::new(PgSettingsRepository::new(db)) as Arc<dyn domain::SettingsRepository>
         })),
+        dev: DevService::new(platform),
     };
 
     let handler = Arc::new(Handler::new(services, platform));

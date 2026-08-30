@@ -68,3 +68,48 @@ pub const THEMES: [&str; 10] = [
 pub const LAYOUTS: [&str; 2] = ["grid", "list"];
 pub const ICON_SIZES: [&str; 3] = ["small", "medium", "large"];
 pub const USER_MODES: [&str; 2] = ["tv", "desktop"];
+
+// ---------------------------------------------------------------------------
+// Dev mode — system monitoring (Sprint 5)
+// ---------------------------------------------------------------------------
+
+/// One point-in-time reading of host resources.
+#[derive(Debug, Clone, Serialize)]
+pub struct SystemSnapshot {
+    /// Global CPU usage, 0.0–100.0 (sampled over a short window).
+    pub cpu_percent: f64,
+    pub load_avg: [f64; 3],
+    pub mem_total_kb: u64,
+    pub mem_used_kb: u64,
+    pub swap_total_kb: u64,
+    pub swap_used_kb: u64,
+    pub disk_total_kb: u64,
+    pub disk_used_kb: u64,
+    /// Aggregate throughput since the previous reading, bytes/s.
+    pub net_rx_bytes_per_s: u64,
+    pub net_tx_bytes_per_s: u64,
+    /// SoC temperature in °C, if the platform exposes one.
+    pub temp_celsius: Option<f64>,
+    pub uptime_secs: u64,
+}
+
+/// A row for the process list.
+#[derive(Debug, Clone, Serialize)]
+pub struct ProcessInfo {
+    pub pid: i32,
+    pub name: String,
+    pub state: String,
+    pub mem_rss_kb: u64,
+    pub nice: i64,
+    pub threads: i64,
+}
+
+/// A Docker container as seen from `docker ps -a`.
+#[derive(Debug, Clone, Serialize)]
+pub struct DockerContainer {
+    pub id: String,
+    pub name: String,
+    pub image: String,
+    pub state: String,
+    pub status: String,
+}

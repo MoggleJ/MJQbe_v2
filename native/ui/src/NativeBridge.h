@@ -45,6 +45,16 @@ public:
     Q_INVOKABLE void updateSettings(const QVariantMap &patch);
     Q_INVOKABLE void login(const QString &username, const QString &password);
 
+    // --- Dev mode --------------------------------------------------------
+    Q_INVOKABLE void verify(const QString &password);         // → verifyResult(token)
+    Q_INVOKABLE void systemSnapshot();
+    Q_INVOKABLE void listProcesses(int limit = 60);
+    Q_INVOKABLE void killProcess(const QString &token, int pid);
+    Q_INVOKABLE void niceProcess(const QString &token, int pid, int niceness);
+    Q_INVOKABLE void listContainers();
+    Q_INVOKABLE void dockerStart(const QString &token, const QString &id);
+    Q_INVOKABLE void dockerStop(const QString &token, const QString &id);
+
 signals:
     void connectedChanged();
     void statusChanged();
@@ -57,6 +67,12 @@ signals:
     void settingsReceived(const QVariantMap &settings);
     void loginResult(bool ok, const QString &role, const QString &error);
     void coreError(const QString &code, const QString &message);
+
+    void verifyResult(bool ok, const QString &token, const QString &error);
+    void snapshotReceived(const QVariantMap &snapshot);
+    void processesReceived(const QVariantList &processes);
+    void containersReceived(const QVariantList &containers);
+    void devActionResult(const QString &action, bool ok, const QString &error);
 
 private slots:
     void onConnected();

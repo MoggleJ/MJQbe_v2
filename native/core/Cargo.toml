@@ -10,13 +10,15 @@ name = "mjqbe-core"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "io-util", "signal", "sync", "time"] }
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "io-util", "signal", "sync", "time", "process"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "chrono"] }
 bcrypt = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
+libc = "0.2"
+rand = "0.8"
 anyhow = "1"
 thiserror = "1"
 tracing = "0.1"

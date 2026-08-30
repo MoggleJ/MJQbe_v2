@@ -85,3 +85,22 @@ Chaque entrée est horodatée.
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 4 | 10 tâches `[x]`, bloc statut | sprint terminé |
 | `.gitignore` | +`/.smoke-out/` | sortie transitoire du smoke-test |
+
+---
+
+## 2026-08-30 — Sprint 5 (mode Dev natif)
+
+### ~23:40 CEST — `native/core` : module `infrastructure/system/` + contrôle système
+- **Type** : nouveau code ; **capacités système** ajoutées au core (lecture `/proc`+`sysfs`, `libc::kill`/`setpriority`, exécution de `docker`).
+- **Fichiers** : +`infrastructure/system/{mod,metrics,processes,docker}.rs`, +`application/dev.rs` ; modifiés : `domain/{entities,error,mod}.rs`, `application/{mod,auth}.rs`, `interface/ipc/{mod,handler}.rs`, `main.rs`, `tests/ipc_roundtrip.rs`, `Cargo.toml` (+`libc`, +`rand`, tokio feature `process`).
+- **Sécurité** : mutations (kill/nice/docker start-stop) exigent un token `auth.verify` (bcrypt, usage unique, TTL 120 s) ; `pid ≤ 1` refusé ; id conteneur validé (anti-injection d'arguments).
+- **Raison** : tâches Sprint 5 (monitoring + contrôle process/Docker + re-auth).
+
+### ~23:44 CEST — `native/ui` : mode Dev
+- **Fichiers** : +`src/TerminalController.{h,cpp}` (QProcess→bash), +`qml/Gauge.qml`, +`qml/pages/Dev.qml` ; modifiés : `CMakeLists.txt`, `src/{main.cpp,NativeBridge.{h,cpp}}`, `qml/{Main,Sidebar}.qml`.
+- **Note** : le terminal exécute `bash -i` **dans le process UI**, pas via le core. Sur le Pi c'est l'utilisateur `mjqbe` (droits de la session).
+
+### Fichiers hors `native/`
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 5 | 9 tâches `[x]`, bloc statut | sprint terminé |

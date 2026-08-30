@@ -71,3 +71,13 @@ Chaque entrée est horodatée.
 - **Différé** : nav télécommande sur écran réel (#137), `QWebEngineView` embarqué, catégories groupées Desktop, réorg QML (#138).
 - **État machine** : stack restaurée (db prod), core arrêté, image smoke supprimée.
 - **Prochaine étape** : commit `sprint-04:`, push dev + `sprint-04-actions`, issues, puis Sprint 5 (mode Dev natif — monitoring système).
+
+### 2026-08-30 23:48 CEST — Sprint 5 : mode Dev natif
+- **Fait** : core `infrastructure/system/` (CPU/RAM/disque/réseau/temp via /proc+sysfs, process kill/nice via libc, docker CLI), tokens de ré-auth usage unique ; UI Dev.qml (gate + monitoring Gauge + process/docker lists + terminal QProcess + dialog ré-auth), Sidebar entrée MJ Dev.
+- **Tests** : 37 core (clippy clean) ; E2E réel (snapshot temp 46°C, 14 conteneurs, token usage unique, anti-injection docker id) ; smoke-test Docker OK.
+- **Erreurs / tentatives** :
+  1. `tokio::process` absent → feature `process` ajoutée. 1 fix.
+  2. clippy `sort_by` → `sort_by_key(Reverse(...))`. 1 fix.
+- **Différé** : vérif Pi (#137), terminal PTY/ANSI (nouvelle issue), URL VNC configurable (nouvelle issue).
+- **État machine** : stack restaurée (db prod), core arrêté, image smoke supprimée.
+- **Prochaine étape** : commit `sprint-05:`, push + branche, issues, puis Sprint 6 (UX & animations natives).

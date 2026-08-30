@@ -3,11 +3,13 @@
 
 mod auth;
 mod catalog;
+mod dev;
 mod favorites;
 mod settings;
 
 pub use auth::{AuthOutcome, AuthService};
 pub use catalog::CatalogService;
+pub use dev::DevService;
 pub use favorites::FavoritesService;
 pub use settings::SettingsService;
 
