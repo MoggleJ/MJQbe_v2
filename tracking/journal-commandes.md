@@ -125,3 +125,10 @@ cwd par défaut : `/home/mogglej/Documents/Projets_persos/MJQbe/MJQbe_v2` (noté
 - `01:2x` — `pip install -r api/requirements-dev.txt` (venv) ; `flake8 app tests` → clean.
 - `01:3x` — `pytest tests/ -q` (db Docker :15432) — 3 échecs : `.test` TLD rejeté par email-validator → emails de test en `@example.com`. Re-run → **15 passed**.
 - `01:3x` — `docker compose up -d --build api` ; live : `POST /auth/login admin/admin` → JWT ; `/auth/me` OK ; `/dev/hardware` sans token → 401, admin → 200 ; register OK ; openapi 6 routes `/auth`.
+
+### Session — Sprint 11 (WEB : apps & catégories CRUD) [2026-08-31]
+
+- `01:4x` — api : +`infrastructure/db/catalog_repo.py` (AppRepository, CategoryRepository), +`interface/routes/catalog.py` (2 routers, schémas Pydantic), `main.py` include. +`tests/test_catalog.py` (8).
+- `01:4x` — `flake8 app tests` clean ; `pytest` — erreurs DB (db recréé en prod sans :15432) → `docker compose ... native.yml up -d db` → **23 passed**.
+- `01:4x` — `sed 's/HTTP_422_UNPROCESSABLE_ENTITY/422/'` (constante Starlette dépréciée).
+- `01:4x` — `docker compose up -d --build api` ; live : `GET /apps?mode=tv`→7, `POST /apps` 401 sans token / 201 admin, `GET /categories?mode=dev`→3 ; probe app 21 supprimée ; db restauré prod.

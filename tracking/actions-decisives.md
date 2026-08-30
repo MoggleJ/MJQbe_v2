@@ -199,3 +199,17 @@ Chaque entrée est horodatée.
 | Fichier | Modif | Pourquoi |
 |---|---|---|
 | `docs/plan-implementation.md` Sprint 10 | 10 tâches `[x]`, bloc statut | sprint terminé |
+
+---
+
+## 2026-08-31 — Sprint 11 (API apps & catégories)
+
+### ~01:45 CEST — API : CRUD apps + catégories
+- **Fichiers** : +`api/app/infrastructure/db/catalog_repo.py`, +`api/app/interface/routes/catalog.py`, +`api/tests/test_catalog.py` ; `api/app/main.py` (+2 routers).
+- **Accès** : GET `/apps` + `/categories` **publics** ; POST/PUT/DELETE **`Depends(require_admin)`**.
+- **Impact machine** : image `api` reconstruite + recréée. Une app de test créée puis supprimée (base `mjqbe`).
+
+### Fichiers hors api
+| Fichier | Modif | Pourquoi |
+|---|---|---|
+| `docs/plan-implementation.md` Sprint 11 | 10 tâches `[x]`, bloc statut | sprint terminé |

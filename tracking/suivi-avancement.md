@@ -120,3 +120,10 @@ Chaque entrée est horodatée.
 - **Différé** : `/admin/*` (routes au Sprint 12, #67) ; flux OAuth réseau réel (pas de client id/secret) ; révocation refresh (Sprint 17).
 - **Issues fermées** : #59 #60 #61 #62 #63 #64 #65 #66 #68. #67 reste (dépend du Sprint 12).
 - **Prochaine étape** : commit `sprint-10:`, push + branche, issues, puis **Sprint 11 (API apps & catégories CRUD)**.
+
+### 2026-08-31 01:50 CEST — Sprint 11 : API apps & catégories
+- **Fait** : AppRepository/CategoryRepository, CRUD `/apps` + `/categories` (lecture publique, écriture admin), schémas Pydantic (Mode Literal), 8 tests.
+- **Tests** : 23 api verts, flake8 clean ; live OK (filtre mode, guards 401/403, CRUD).
+- **Erreurs** : db recréé sans port 15432 → re-`up` override native (1 fix) ; constante 422 dépréciée → littéral.
+- **Issues fermées** : #69 #70 #71 #72 #73 #74 #75 #76 #77 #78.
+- **Prochaine étape** : commit `sprint-11:`, push + branche, issues, puis **Sprint 12 (settings/favoris/logs + admin système)**.

@@ -216,24 +216,25 @@ Tests passent. `POST /auth/login` avec credentials valides retourne un JWT. Rout
 
 ---
 
-## Sprint 11 — API — Apps & Catégories [WEB]
+## Sprint 11 — API — Apps & Catégories [WEB] ✓
 
 **Objectif :** CRUD complet pour apps et catégories, filtrage par mode.
 
 ### Tâches
-- [ ] Implémenter les entités `App` et `Category` (domain + infrastructure)
-- [ ] `GET /apps` — liste filtrée par mode, catégorie (query params)
-- [ ] `GET /apps/:id` — détail d'une app
-- [ ] `POST /apps` — créer une app (admin)
-- [ ] `PUT /apps/:id` — modifier (admin)
-- [ ] `DELETE /apps/:id` — supprimer (admin)
-- [ ] `GET /categories` — liste par mode
-- [ ] `POST /categories`, `PUT /categories/:id`, `DELETE /categories/:id` (admin)
-- [ ] Validation des inputs (Pydantic schemas)
-- [ ] Écrire les tests pour chaque endpoint
+- [x] `AppRepository` + `CategoryRepository` (`infrastructure/db/catalog_repo.py`)
+- [x] `GET /apps?mode&category_id&include_inactive` — filtré, actifs seuls par défaut
+- [x] `GET /apps/:id` — 404 si absent
+- [x] `POST /apps` (admin) — 201 ; vérifie `category_id`
+- [x] `PUT /apps/:id` (admin) — partiel (`exclude_unset`)
+- [x] `DELETE /apps/:id` (admin) — 204
+- [x] `GET /categories?mode`
+- [x] `POST /categories` (admin, 409 si doublon name+mode), `PUT`/`DELETE /categories/:id` (admin)
+- [x] Schémas Pydantic `AppCreate`/`AppUpdate`/`CategoryCreate`/`CategoryUpdate` (`Mode` Literal, longueurs)
+- [x] Tests — `tests/test_catalog.py` (8) → **23 api total**
 
 ### Livrable de vérification
 Tests passent. `GET /apps?mode=tv` retourne les apps TV du seed. `POST /apps` sans token admin retourne 403.
+**Statut :** **23 tests api** verts, flake8 clean. Live : `GET /apps?mode=tv` → 7 apps du seed ; `POST /apps` sans token → 401, token user → 403, token admin → 201 ; `GET /categories?mode=dev` → GPIO/Serveurs/Système. Voir `tracking/sprint-11.md`.
 
 ---
 
